@@ -1,0 +1,4 @@
+comment = 'foregin data wrapper for Tibero access'
+default_version = '1.0'
+module_pathname = '$libdir/tibero_fdw'
+relocatable = true
