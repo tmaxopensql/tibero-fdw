@@ -41,18 +41,18 @@ jobs:
         repository: ${{ env.DEPLOY_REPO }}
         ref: main
         token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
-        path: ubuntu
+        path: Tibero-fdw-dist
     
-    - name: Deploy to Tibero-fdw-dist
+    - name: Deploy to tibero-fdw-dist
       run: |
         git config --global user.email "${{ github.actor }}@users.noreply.github.com"
         git config --global user.name "${{ github.actor }}"
-        cp tibero_fdw.so ubuntu/
-        cp tibero_fdw.control ubuntu/
-        cp *.sql ubuntu/
-        cd ubuntu/
+        cp tibero_fdw.so tibero-fdw-dist/ubuntu/
+        cp tibero_fdw.control tibero-fdw-dist/ubuntu/
+        cp *.sql tibero-fdw-dist/ubuntu/
+        cd utibero-fdw-dist/ubuntu/
         ls
-        git add tibero_fdw.so
+        git add .
         git commit -m "Deploy libraries"
         git push origin main
         
