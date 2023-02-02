@@ -53,8 +53,7 @@ jobs:
         echo $BUILD_DIR
         echo 'github workspace is : '
         echo $GITHUB_WORKSPACE
-        cp $GITHUB_WORKSPACE/tibero_fdw.so .
-        git add .
+        git add tibero_fdw.so
         git commit -m "Deploy libraries"
         git push origin main
         
