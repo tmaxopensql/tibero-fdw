@@ -31,6 +31,7 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         make USE_PGXS=1
+        BUILD_DIR=$(pwd)
         
     - name: Checkout deploy replository
       uses: actions/checkout@v2
@@ -44,7 +45,7 @@ jobs:
       run: |
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
-        git add .
+        git add $BUILD_DIR
         git commit -m "Deploy libraries"
         git push origin main
         
