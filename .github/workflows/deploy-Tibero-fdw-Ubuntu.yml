@@ -8,7 +8,6 @@ on:
 
 env: 
   DEPLOY_REPO: hypersql/Tibero-fdw-dist
-  BUILD_DIR: ${{ env.BUILD_DIR }}
 
 jobs:
   deploy-Tiberofdw-Ubuntu:
@@ -29,6 +28,8 @@ jobs:
         sudo apt-get install -y postgresql postgresql-contrib postgresql-server-dev-all
     
     - name: Build tibero-fdw 
+      env:
+          BUILD_DIR: ${{ env.BUILD_DIR }}
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         make USE_PGXS=1
