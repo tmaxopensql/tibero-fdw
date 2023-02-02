@@ -8,6 +8,7 @@ on:
 
 env: 
   DEPLOY_REPO: hypersql/Tibero-fdw-dist
+  BUILD_DIR: ${{ env.BUILD_DIR }}
 
 jobs:
   deploy-Tiberofdw-Ubuntu:
@@ -32,6 +33,7 @@ jobs:
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         make USE_PGXS=1
         BUILD_DIR=$GITHUB_WORKSPACE
+      
         
     - name: Checkout deploy replository
       uses: actions/checkout@v2
