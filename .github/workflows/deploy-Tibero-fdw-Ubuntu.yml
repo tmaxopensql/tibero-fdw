@@ -37,7 +37,7 @@ jobs:
       with:
         repository: ${{ env.DEPLOY_REPO }}
         ref: main
-        token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+        token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
     
     - name: Deply to Tibero-fdw-dist    
       run: |
