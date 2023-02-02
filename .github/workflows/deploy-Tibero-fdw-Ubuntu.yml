@@ -25,7 +25,7 @@ jobs:
     - name: Install PostgreSQL
       run: |
         sudo apt-get update
-        sudo apt-get install -y postgresql postgresql-contrib postgresql-server-dev
+        sudo apt-get install -y postgresql postgresql-contrib postgresql-server-dev-all
     
     - name: Build tibero-fdw 
       run: |
