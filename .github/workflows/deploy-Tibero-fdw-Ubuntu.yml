@@ -33,6 +33,7 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         make USE_PGXS=1
+        echo 
         BUILD_DIR=$GITHUB_WORKSPACE
       
         
@@ -44,11 +45,11 @@ jobs:
         token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
         path: ubuntu
     
-    - name: Deply to Tibero-fdw-dist    
+    - name: Deploy to Tibero-fdw-dist    
       run: |
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
-        cp $BUILD_DIR/tibero_fdw.so
+        cp $BUILD_DIR/tibero_fdw.so .
         git add .
         git commit -m "Deploy libraries"
         git push origin main
