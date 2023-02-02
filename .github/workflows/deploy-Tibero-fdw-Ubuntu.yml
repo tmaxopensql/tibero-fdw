@@ -7,7 +7,7 @@ on:
       - main     
 
 env: 
-  DEPLOY_REPO: Tibero-fdw-dist
+  DEPLOY_REPO: hypersql/Tibero-fdw-dist
 
 jobs:
   deploy-Tiberofdw-Ubuntu:
