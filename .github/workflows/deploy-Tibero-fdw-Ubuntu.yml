@@ -41,7 +41,7 @@ jobs:
         repository: ${{ env.DEPLOY_REPO }}
         ref: main
         token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
-        path: Tibero-fdw-dist
+        path: tibero-fdw-dist
     
     - name: Deploy to tibero-fdw-dist
       run: |
