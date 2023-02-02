@@ -29,6 +29,7 @@ jobs:
     
     - name: Build tibero-fdw 
       run: |
+        cd $GITHUB_WORKSPACE
         . ./setenv
         make USE_PGXS=1
         
