@@ -48,7 +48,8 @@ jobs:
       run: |
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
-        git add $BUILD_DIR/tibero_fdw.so
+        cp $BUILD_DIR/tibero_fdw.so
+        git add .
         git commit -m "Deploy libraries"
         git push origin main
         
