@@ -45,8 +45,10 @@ jobs:
     
     - name: Deploy to tibero-fdw-dist
       run: |
+        ls
         git config --global user.email "${{ github.actor }}@users.noreply.github.com"
         git config --global user.name "${{ github.actor }}"
+        ls
         cp tibero_fdw.so tibero-fdw-dist/ubuntu/
         cp tibero_fdw.control tibero-fdw-dist/ubuntu/
         cp *.sql tibero-fdw-dist/ubuntu/
