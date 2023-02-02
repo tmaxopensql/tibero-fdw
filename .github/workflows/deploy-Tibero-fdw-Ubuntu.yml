@@ -44,14 +44,13 @@ jobs:
         path: ubuntu
     
     - name: Deploy to Tibero-fdw-dist
-      env:
-        BUILD_DIR: ${{ env.BUILD_DIR }}
       run: |
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
         ls
         cp tibero_fdw.so ubuntu/
         cd ubuntu/
+        git init
         git add tibero_fdw.so
         git commit -m "Deploy libraries"
         git push origin main
