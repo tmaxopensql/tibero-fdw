@@ -38,11 +38,12 @@ jobs:
         repository: ${{ env.DEPLOY_REPO }}
         ref: main
         token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+        path: ubuntu
     
     - name: Deply to Tibero-fdw-dist    
       run: |
-        git config user.email "${{ env.GITHUB_ACTOR }}@users.noreply.github.com"
-        git config user.name "${{ env.GITHUB_ACTOR }}"
+        git config user.email "${{ GITHUB_ACTOR }}@users.noreply.github.com"
+        git config user.name "${{ GITHUB_ACTOR }}"
         git add .
         git commit -m "Deploy libraries"
         git push origin main
