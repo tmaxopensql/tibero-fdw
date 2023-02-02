@@ -49,10 +49,8 @@ jobs:
       run: |
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git config user.name "${{ github.actor }}"
-        echo 'build dir is : '
-        echo $BUILD_DIR
-        echo 'github workspace is : '
-        echo $GITHUB_WORKSPACE
+        ls
+        cd ubuntu/
         git add tibero_fdw.so
         git commit -m "Deploy libraries"
         git push origin main
