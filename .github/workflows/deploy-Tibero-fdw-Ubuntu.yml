@@ -51,6 +51,8 @@ jobs:
         git config user.name "${{ github.actor }}"
         echo 'build dir is : '
         echo $BUILD_DIR
+        echo 'github workspace is : '
+        echo $GITHUB_WORKSPACE
         cp $BUILD_DIR/tibero_fdw.so .
         git add .
         git commit -m "Deploy libraries"
