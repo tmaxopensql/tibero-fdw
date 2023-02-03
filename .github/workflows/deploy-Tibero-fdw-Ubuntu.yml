@@ -25,7 +25,7 @@ jobs:
     - name: Install PostgreSQL
       run: |
         sudo apt-get update
-        sudo apt-get install -y postgresql postgresql-contrib postgresql-server-dev-all
+        sudo apt-get install -y postgresql-14 postgresql-contrib-14 postgresql-server-dev-14
     
     - name: Build tibero-fdw 
       run: |
@@ -52,8 +52,6 @@ jobs:
         cp tibero_fdw.control tibero-fdw-dist/ubuntu/
         cp *.sql tibero-fdw-dist/ubuntu/
         cp Makefile tibero-fdw-dist/ubuntu/
-        cp -r /lib tibero-fdw-dist/ubuntu/
-        cp setenv.sh tibero-fdw-dist/ubuntu/
         
         cd tibero-fdw-dist/ubuntu/
         ls
