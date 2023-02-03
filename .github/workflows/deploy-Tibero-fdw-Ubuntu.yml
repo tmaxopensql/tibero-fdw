@@ -1,4 +1,4 @@
-name: deploy-Tibero-fdw-Ubuntu 
+name: deploy-tibero-fdw-Ubuntu 
 
 on:
   workflow_dispatch: #for dispatch
@@ -7,7 +7,7 @@ on:
       - main     
 
 env: 
-  DEPLOY_REPO: hypersql/Tibero-fdw-dist
+  DEPLOY_REPO: hypersql/tibero-fdw-dist
 
 jobs:
   deploy-Tiberofdw-Ubuntu:
