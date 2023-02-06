@@ -1,0 +1,64 @@
+name: deploy-tibero-fdw-Ubuntu 
+
+on:
+  workflow_dispatch: #for dispatch
+  push:
+    branches:
+      - main     
+
+env: 
+  DEPLOY_REPO: hypersql/tibero-fdw-dist
+
+jobs:
+  deploy-Tiberofdw-Ubuntu:
+    runs-on: ubuntu-20.04
+    
+    steps:
+    - name: Checkout tibero-fdw source code
+      uses: actions/checkout@v2
+      
+    - name: Add PGDG repository
+      run: |
+        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+      
+    - name: Install PostgreSQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-14 postgresql-contrib-14 postgresql-server-dev-14
+    
+    - name: Build tibero-fdw 
+      run: |
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
+        echo $LD_LIBRARY_PATH
+        ls $GITHUB_WORKSPACE/lib
+        make USE_PGXS=1
+        ldd tibero_fdw.so
+      
+        
+    - name: Checkout deploy replository
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ env.DEPLOY_REPO }}
+        ref: main
+        token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+        path: tibero-fdw-dist
+    
+    - name: Deploy to tibero-fdw-dist
+      run: |
+        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+        git config --global user.name "${{ github.actor }}"
+        
+        cp tibero_fdw.so tibero-fdw-dist/ubuntu/
+        cp tibero_fdw.control tibero-fdw-dist/ubuntu/
+        cp *.sql tibero-fdw-dist/ubuntu/
+        cp Makefile tibero-fdw-dist/ubuntu/
+        
+        cd tibero-fdw-dist/ubuntu/
+        ls
+        git add .
+        git commit --allow-empty -m "Deploy libraries"
+        git push origin main
+        
+    
+        
