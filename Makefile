@@ -6,7 +6,9 @@ OBJS = tibero_fdw.o
 
 
 PG_CPPFLAGS = -I"./include"
-PG_LDFLAGS = -L"./lib" -ltbcli
+#PG_LDFLAGS = -L"./lib" -ltbcli
+SHLIB_LINK = -L"./lib" -ltbcliWl,-Bdynamic
+
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
