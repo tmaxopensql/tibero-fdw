@@ -30,6 +30,7 @@ jobs:
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
+        echo $LD_LIBRARY_PATH
         make USE_PGXS=1
         ldd tibero_fdw.so
       
