@@ -92,13 +92,15 @@ Datum tibero_fdw_handler(PG_FUNCTION_ARGS)
 static void tiberoGetForeignRelSize(PlannerInfo *root,
                                     RelOptInfo *baserel,
                                     Oid foreigntableid)
-{
+{	
+  GetConnection(NULL,false);
 }
 
 static void tiberoGetForeignPaths(PlannerInfo *root,
                                   RelOptInfo *baserel,
                                   Oid foreigntableid)
 {
+  
 }
 
 static ForeignScan *tiberoGetForeignPlan(PlannerInfo *root,
