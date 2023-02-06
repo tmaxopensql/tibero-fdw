@@ -2,12 +2,14 @@ MODULE_big = tibero_fdw
 EXTENSION = tibero_fdw
 
 DATA = tibero_fdw--1.0.sql
-OBJS = tibero_fdw.o 
+OBJS = tibero_fdw.o connection.o 
 
 
 PG_CPPFLAGS = -I"./include"
-#PG_LDFLAGS = -L"./lib" -ltbcli
-SHLIB_LINK = -L"./lib" -ltbcli 
+
+#SHLIB_LINK = -L"./lib" -ltbcli
+PG_LDFLAGS = -L"./lib" -ltbcli
+
 
 
 ifdef USE_PGXS
