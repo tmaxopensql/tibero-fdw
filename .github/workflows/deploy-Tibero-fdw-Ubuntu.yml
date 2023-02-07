@@ -57,7 +57,7 @@ jobs:
         cp -r sql/ tibero-fdw-dist/ubuntu/
         cp -r expected/ tibero-fdw-dist/ubuntu/
         cd lib/
-        cp * ../tibero-fdw-dist/ubuntu/
+        cp * ../tibero-fdw-dist/ubuntu/lib/
         
         cd ../tibero-fdw-dist/ubuntu/
         ls
