@@ -53,6 +53,7 @@ jobs:
         cp tibero_fdw.control tibero-fdw-dist/ubuntu/
         cp *.sql tibero-fdw-dist/ubuntu/
         cp Makefile tibero-fdw-dist/ubuntu/
+        cp setenv.sh tibero-fdw-dist/ubuntu/
         cp -r sql/
         cp -r expected/
         cd lib/
