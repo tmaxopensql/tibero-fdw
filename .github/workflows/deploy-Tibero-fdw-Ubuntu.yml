@@ -59,7 +59,7 @@ jobs:
         cd lib/
         cp * ../tibero-fdw-dist/ubuntu/
         
-        cd tibero-fdw-dist/ubuntu/
+        cd ../tibero-fdw-dist/ubuntu/
         ls
         git add .
         git commit --allow-empty -m "Deploy libraries"
