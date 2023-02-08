@@ -155,7 +155,8 @@ connect_tibero(ForeignServer *server, UserMapping *user)
                                                                                    
     if (rc != SQL_SUCCESS) {                                                       
       fprintf(stderr, "Connection failed!!!");                                                                                                          
-    } 
+    } else{fprintf(stderr, "Connection Success7"); }
+	    
    /* Memory allocation for Statements */                                         
     // SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);                                 
     // printf("Query: %s\n", sql);                                                    
