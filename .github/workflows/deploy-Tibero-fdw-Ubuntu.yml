@@ -1,4 +1,4 @@
-name: deploy-tibero-fdw-Ubuntu 
+name: deploy-tibero-fdw-Ubuntu20.04 
 
 on:
   workflow_dispatch: #for dispatch
@@ -49,17 +49,17 @@ jobs:
         git config --global user.email "${{ github.actor }}@users.noreply.github.com"
         git config --global user.name "${{ github.actor }}"
         
-        cp tibero_fdw.so tibero-fdw-dist/ubuntu/
-        cp tibero_fdw.control tibero-fdw-dist/ubuntu/
-        cp *.sql tibero-fdw-dist/ubuntu/
-        cp Makefile tibero-fdw-dist/ubuntu/
-        cp setenv.sh tibero-fdw-dist/ubuntu/
-        cp -r sql/ tibero-fdw-dist/ubuntu/
-        cp -r expected/ tibero-fdw-dist/ubuntu/
+        cp tibero_fdw.so tibero-fdw-dist/ubuntu20.04/
+        cp tibero_fdw.control tibero-fdw-dist/ubuntu20.04/
+        cp *.sql tibero-fdw-dist/ubuntu20.04/
+        cp Makefile tibero-fdw-dist/ubuntu20.04/
+        cp setenv.sh tibero-fdw-dist/ubuntu20.04/
+        cp -r sql/ tibero-fdw-dist/ubuntu20.04/
+        cp -r expected/ tibero-fdw-dist/ubuntu20.04/
         cd lib/
-        cp * ../tibero-fdw-dist/ubuntu/lib/
+        cp * ../tibero-fdw-dist/ubuntu20.04/lib/
         
-        cd ../tibero-fdw-dist/ubuntu/
+        cd ../tibero-fdw-dist/ubuntu20.04/
         ls
         git add .
         if [[ -n $(git diff --cached --exit-code) ]]; then
