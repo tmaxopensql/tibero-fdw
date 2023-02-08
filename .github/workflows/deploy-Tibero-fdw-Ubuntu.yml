@@ -62,8 +62,13 @@ jobs:
         cd ../tibero-fdw-dist/ubuntu/
         ls
         git add .
-        git commit --allow-empty -m "Deploy libraries"
-        git push origin main
+        if [[ -n $(git diff --cached --exit-code) ]]; then
+          git commit -m "Deploy libraries"
+          git push origin main
+        else
+          echo "No changes to commit"
+        fi
+
         
     
         
