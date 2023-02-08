@@ -4,7 +4,7 @@ MODULE_big = tibero_fdw
 OBJS = deparse.o connection.o tibero_fdw.o
 PGFILEDESC = "tibero_fdw - foreign data wrapper for Tibero"
 
-PG_CFLAGS = -I./include
+PG_CPPLAGS = -I./include
 PG_LDFLAGS = -L./lib
 SHLIB_LINK = -ltbcli
 
