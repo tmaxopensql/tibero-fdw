@@ -1,24 +1,19 @@
+# contrib/tibero_fdw/Makefile
+
 MODULE_big = tibero_fdw
+OBJS = deparse.o connection.o tibero_fdw.o
+PGFILEDESC = "tibero_fdw - foreign data wrapper for Tibero"
+
+PG_CFLAGS = -I./include
+PG_LDFLAGS = -L./lib
+SHLIB_LINK = -ltbcli
+
 EXTENSION = tibero_fdw
-
 DATA = tibero_fdw--1.0.sql
-OBJS = tibero_fdw.o connection.o 
 
+REGRESS = tibero_fdw
 
-PG_CPPFLAGS = -I"./include"
-
-SHLIB_LINK = -L"./lib" -ltbcli
-PG_LDFLAGS = -L"./lib" -ltbcli
-
-
-
-ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
-else
-subdir = contrib/tibero_fdw
-top_builddir= ../..
-include $(top_builddir)/src/Makefile.global
-include $(top_srcdir)/contrib/contrib-global.mk
-endif 
+

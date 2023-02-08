@@ -18,10 +18,10 @@ Also you need PostgreSQL headers (if your PostgreSQL was installed with packages
 
 2. Compile the code using make
 ```
-make USE_PGXS=1 
+make
 ```
 
 3. Install Tibero foreign data wrapper.
 ```
-make USE_PGXS=1 install 
+make install 
 ```
