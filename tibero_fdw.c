@@ -231,6 +231,8 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = DEFAULT_FDW_FETCH_SIZE;
 
+	fpinfo->use_fb_query = true;
+
 	apply_server_options(fpinfo);
 	apply_table_options(fpinfo);
 
