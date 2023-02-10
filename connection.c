@@ -97,7 +97,7 @@ NeedRemoteSnapshot(ConnCacheEntry *conn)
 }
 
 void
-GetTbStatement(UserMapping *user, TbStatement *tbStmt)
+GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 {
   bool found = false;
   bool retry = false;
@@ -139,7 +139,7 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt)
     if (conn->begin_remote_xact == false)
       BeginRemoteXact(tbStmt, IsolationUsesXactSnapshot());
 
-    if (NeedRemoteSnapshot(conn)) {
+    if (use_fb_query && NeedRemoteSnapshot(conn)) {
       SQLUINTEGER len;
       TbSQLExecDirect(tbStmt, (SQLCHAR *)"SELECT current_tsn FROM v$database", 
                       SQL_NTS);

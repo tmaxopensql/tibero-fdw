@@ -39,14 +39,15 @@
 #include "utils/typcache.h"
 #include "commands/tablecmds.h"
 
-typedef struct deparse_expr_cxt
+typedef struct deparse_expr_ctx
 {
 	PlannerInfo *root;
 	RelOptInfo *foreignrel;
 	RelOptInfo *scanrel;
 	StringInfo	buf;
 	List	  **params_list;
-} deparse_expr_cxt;
+	bool use_fb_query;
+} deparse_expr_ctx;
 
 #define REL_ALIAS_PREFIX	"r"
 #define ADD_REL_QUALIFIER(buf, varno)	\
@@ -58,16 +59,16 @@ static void daprse_target_list(StringInfo buf, RangeTblEntry *rte, Index rtindex
 							  							List **retrieved_attrs);
 static void deparse_column_ref(StringInfo buf, int varno, int varattno,
 							 							 RangeTblEntry *rte, bool qualify_col);
-static void deparse_replation(StringInfo buf, Relation rel);
-static void deparse_expr(Expr *expr, deparse_expr_cxt *context);
+static void deparse_replation(StringInfo buf, Relation rel, bool use_fb_query);
+static void deparse_expr(Expr *expr, deparse_expr_ctx *context);
 static void deparse_select_sql(List *tlist, bool is_subquery, List **retrieved_attrs,
-							 							 deparse_expr_cxt *context);
-static void append_conditions(List *exprs, deparse_expr_cxt *context);
+							 							 deparse_expr_ctx *context);
+static void append_conditions(List *exprs, deparse_expr_ctx *context);
 static void deparse_from_expr_for_rel(StringInfo buf, PlannerInfo *root,
 								  								RelOptInfo *foreignrel, bool use_alias,
 								  								Index ignore_rel, List **ignore_conds,
-								  								List **params_list);
-static void deparse_from_expr(List *quals, deparse_expr_cxt *context);
+								  								List **params_list, bool use_fb_query);
+static void deparse_from_expr(List *quals, deparse_expr_ctx *context);
 
 void
 classify_conditions(PlannerInfo *root, RelOptInfo *baserel, List *input_conds,
@@ -101,9 +102,10 @@ void
 deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 														List *tlist, List *remote_conds, List *pathkeys,
 														bool has_final_sort, bool has_limit, bool is_subquery,
-														List **retrieved_attrs, List **params_list)
+														List **retrieved_attrs, List **params_list, 
+														bool use_fb_query)
 {
-	deparse_expr_cxt context;
+	deparse_expr_ctx context;
 	List *quals;
 
 	Assert(IS_SIMPLE_REL(rel));
@@ -113,6 +115,7 @@ deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 	context.foreignrel = rel;
 	context.scanrel = rel;
 	context.params_list = params_list;
+	context.use_fb_query = use_fb_query;
 
 	deparse_select_sql(tlist, is_subquery, retrieved_attrs, &context);
 
@@ -122,7 +125,7 @@ deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 
 static void
 deparse_select_sql(List *tlist, bool is_subquery, List **retrieved_attrs,
-								 deparse_expr_cxt *context)
+								 deparse_expr_ctx *context)
 {
 	StringInfo	buf = context->buf;
 	RelOptInfo *foreignrel = context->foreignrel;
@@ -141,7 +144,7 @@ deparse_select_sql(List *tlist, bool is_subquery, List **retrieved_attrs,
 }
 
 static void
-deparse_from_expr(List *quals, deparse_expr_cxt *context)
+deparse_from_expr(List *quals, deparse_expr_ctx *context)
 {
 	StringInfo	buf = context->buf;
 	RelOptInfo *scanrel = context->scanrel;
@@ -152,7 +155,7 @@ deparse_from_expr(List *quals, deparse_expr_cxt *context)
 	appendStringInfoString(buf, " FROM ");
 	deparse_from_expr_for_rel(buf, context->root, scanrel,
 						  (bms_membership(scanrel->relids) == BMS_MULTIPLE),
-						  (Index) 0, NULL, context->params_list);
+						  (Index) 0, NULL, context->params_list, context->use_fb_query);
 
 	if (quals != NIL) {
 		appendStringInfoString(buf, " WHERE ");
@@ -217,7 +220,7 @@ daprse_target_list(StringInfo buf, RangeTblEntry *rte, Index rtindex, Relation r
 }
 
 static void
-append_conditions(List *exprs, deparse_expr_cxt *context)
+append_conditions(List *exprs, deparse_expr_ctx *context)
 {
 	ListCell *lc;
 	bool is_first = true;
@@ -248,13 +251,13 @@ append_conditions(List *exprs, deparse_expr_cxt *context)
 static void
 deparse_from_expr_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 					  bool use_alias, Index ignore_rel, List **ignore_conds,
-					  List **params_list)
+					  List **params_list, bool use_fb_query)
 {
 	RangeTblEntry *rte = planner_rt_fetch(foreignrel->relid, root);
 
 	Relation	rel = table_open(rte->relid, NoLock);
 
-	deparse_replation(buf, rel);
+	deparse_replation(buf, rel, use_fb_query);
 
 	if (use_alias)
 		appendStringInfo(buf, " %s%d", REL_ALIAS_PREFIX, foreignrel->relid);
@@ -340,13 +343,14 @@ deparse_column_ref(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 }
 
 static void
-deparse_replation(StringInfo buf, Relation rel)
+deparse_replation(StringInfo buf, Relation rel, bool use_fb_query)
 {
 	ForeignTable *table;
 	const char *owner_name = NULL;
 	const char *rel_name = NULL;
 	ListCell   *lc;
-	const char *flashback_clause = IsolationUsesXactSnapshot() ? "" : " as of tsn ?";
+	const char *flashback_clause = (use_fb_query && !IsolationUsesXactSnapshot()) ?
+																 " as of tsn ?" : "";
 
 	table = GetForeignTable(RelationGetRelid(rel));
 
@@ -371,7 +375,7 @@ deparse_replation(StringInfo buf, Relation rel)
 }
 
 static void
-deparse_expr(Expr *node, deparse_expr_cxt *context)
+deparse_expr(Expr *node, deparse_expr_ctx *context)
 {
 	Assert(node == NULL);
 	return;

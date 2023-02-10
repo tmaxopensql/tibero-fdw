@@ -52,6 +52,8 @@ typedef struct TbFdwRelationInfo
   int fetch_size;
 
   char *relation_name;
+
+  bool use_fb_query;
 } TbFdwRelationInfo;
 
 /* in deparse.c */
@@ -63,7 +65,8 @@ extern void deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root,
                                         RelOptInfo *rel, List *tlist, List *remote_conds, 
                                         List *pathkeys, bool has_final_sort, 
                                         bool has_limit, bool is_subquery,
-                                        List **retrieved_attrs, List **params_list);
+                                        List **retrieved_attrs, List **params_list,
+                                        bool use_fb_query);
 
 /* in tibero_fdw.c */
 extern int	set_transmission_modes(void);

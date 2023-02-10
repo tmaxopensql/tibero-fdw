@@ -56,9 +56,7 @@
 
 PG_MODULE_MAGIC;
 
-/* Default CPU cost to start up a foreign query. */
 #define DEFAULT_FDW_STARTUP_COST	100.0
-/* Default CPU cost to process 1 row (above and beyond cpu_tuple_cost). */
 #define DEFAULT_FDW_TUPLE_COST		0.01
 #define DEFAULT_FDW_FETCH_SIZE    100
 #define TB_MAXLEN_SQLID_WITH_NULL 129
@@ -68,7 +66,8 @@ enum FdwScanPrivateIndex
 {
 	FdwScanPrivateSelectSql,
 	FdwScanPrivateRetrievedAttrs,
-	FdwScanPrivateFetchSize
+	FdwScanPrivateFetchSize,
+	FdwScanPrivateUseFbQuery
 };
 
 enum FdwPathPrivateIndex
@@ -115,6 +114,7 @@ typedef struct TbFdwScanState
 	TbStatement *tbStmt;
 	TbTable *table;
 
+	bool use_fb_query;
 } TbFdwScanState;
 
 PG_FUNCTION_INFO_V1(tibero_fdw_handler);
@@ -157,51 +157,8 @@ tibero_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ReScanForeignScan = tiberoReScanForeignScan;
 	routine->EndForeignScan = tiberoEndForeignScan;
 
-	// /* Functions for updating foreign tables */
-	// routine->AddForeignUpdateTargets = tiberoAddForeignUpdateTargets;
-	// routine->PlanForeignModify = tiberoPlanForeignModify;
-	// routine->BeginForeignModify = tiberoBeginForeignModify;
-	// routine->ExecForeignInsert = tiberoExecForeignInsert;
-	// routine->ExecForeignBatchInsert = tiberoExecForeignBatchInsert;
-	// routine->GetForeignModifyBatchSize = tiberoGetForeignModifyBatchSize;
-	// routine->ExecForeignUpdate = tiberoExecForeignUpdate;
-	// routine->ExecForeignDelete = tiberoExecForeignDelete;
-	// routine->EndForeignModify = tiberoEndForeignModify;
-	// routine->BeginForeignInsert = tiberoBeginForeignInsert;
-	// routine->EndForeignInsert = tiberoEndForeignInsert;
-	// routine->IsForeignRelUpdatable = tiberoIsForeignRelUpdatable;
-	// routine->PlanDirectModify = tiberoPlanDirectModify;
-	// routine->BeginDirectModify = tiberoBeginDirectModify;
-	// routine->IterateDirectModify = tiberoIterateDirectModify;
-	// routine->EndDirectModify = tiberoEndDirectModify;
-
-	// /* Function for EvalPlanQual rechecks */
-	// routine->RecheckForeignScan = tiberoRecheckForeignScan;
-	// /* Support functions for EXPLAIN */
-	// routine->ExplainForeignScan = tiberoExplainForeignScan;
-	// routine->ExplainForeignModify = tiberoExplainForeignModify;
-	// routine->ExplainDirectModify = tiberoExplainDirectModify;
-
-	// /* Support function for TRUNCATE */
-	// routine->ExecForeignTruncate = tiberoExecForeignTruncate;
-
-	// /* Support functions for ANALYZE */
-	// routine->AnalyzeForeignTable = tiberoAnalyzeForeignTable;
-
-	// /* Support functions for IMPORT FOREIGN SCHEMA */
-	// routine->ImportForeignSchema = tiberoImportForeignSchema;
-
-	// /* Support functions for join push-down */
+	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tiberoGetForeignJoinPaths;
-
-	// /* Support functions for upper relation push-down */
-	// routine->GetForeignUpperPaths = tiberoGetForeignUpperPaths;
-
-	// /* Support functions for asynchronous execution */
-	// routine->IsForeignPathAsyncCapable = tiberoIsForeignPathAsyncCapable;
-	// routine->ForeignAsyncRequest = tiberoForeignAsyncRequest;
-	// routine->ForeignAsyncConfigureWait = tiberoForeignAsyncConfigureWait;
-	// routine->ForeignAsyncNotify = tiberoForeignAsyncNotify;
 
 	PG_RETURN_POINTER(routine);
 }
@@ -226,6 +183,8 @@ apply_server_options(TbFdwRelationInfo *fpinfo)
 			fpinfo->shippable_extensions = NIL;
 		else if (strcmp(def->defname, "fetch_size") == 0)
 			(void) parse_int(defGetString(def), &fpinfo->fetch_size, 0, NULL);
+		else if (strcmp(def->defname, "use_fb_query") == 0)
+			fpinfo->use_fb_query = defGetBoolean(def);
 		else if (strcmp(def->defname, "async_capable") == 0) {
 			/* TODO */
 		}
@@ -282,11 +241,11 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 	}
 
 	classify_conditions(root, baserel, baserel->baserestrictinfo,
-										 &fpinfo->remote_conds, &fpinfo->local_conds);
+											&fpinfo->remote_conds, &fpinfo->local_conds);
 
 	fpinfo->attrs_used = NULL;
 	pull_varattnos((Node *) baserel->reltarget->exprs, baserel->relid,
-									&fpinfo->attrs_used);
+								 &fpinfo->attrs_used);
 	foreach(lc, fpinfo->local_conds) {
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 		pull_varattnos((Node *) rinfo->clause, baserel->relid,
@@ -356,7 +315,7 @@ tiberoGetForeignPlan(PlannerInfo *root,
 		has_final_sort = intVal(list_nth(best_path->fdw_private,
 																		 FdwPathPrivateHasFinalSort));
 		has_limit = intVal(list_nth(best_path->fdw_private,
-																		 FdwPathPrivateHasLimit));
+																FdwPathPrivateHasLimit));
 	}
 
 	if (IS_SIMPLE_REL(foreignrel)) {
@@ -388,11 +347,12 @@ tiberoGetForeignPlan(PlannerInfo *root,
 	deparse_select_stmt_for_rel(&sql, root, foreignrel, fdw_scan_tlist,
 															remote_exprs, best_path->path.pathkeys,
 															has_final_sort, has_limit, false,
-															&retrieved_attrs, &params_list);
+															&retrieved_attrs, &params_list, fpinfo->use_fb_query);
 
-	fdw_private = list_make3(makeString(sql.data),
+	fdw_private = list_make4(makeString(sql.data),
 													 retrieved_attrs,
-													 makeInteger(fpinfo->fetch_size));
+													 makeInteger(fpinfo->fetch_size),
+													 makeInteger(fpinfo->use_fb_query));
 
 	Assert(IS_SIMPLE_REL(foreignrel));
 
@@ -431,12 +391,14 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	user = GetUserMapping(userid, table->serverid);
 
 	fsstate->query = (unsigned char *) strVal(list_nth(fsplan->fdw_private,
-																   FdwScanPrivateSelectSql));
+																   				  				 FdwScanPrivateSelectSql));
 	fsstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
 												 											 FdwScanPrivateRetrievedAttrs);
-
 	fsstate->fetch_size = intVal(list_nth(fsplan->fdw_private,
 										  								  FdwScanPrivateFetchSize));
+	fsstate->use_fb_query = intVal(list_nth(fsplan->fdw_private,
+																					FdwScanPrivateUseFbQuery));
+
 	fsstate->tuple_cnt = TB_FDW_INIT_TUPLE_CNT;
 	fsstate->cur_tuple_idx = 0;
 	fsstate->end_of_fetch = false;
@@ -454,13 +416,14 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
 	fsstate->table = (TbTable *) palloc0(sizeof(TbTable));
-	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) * fsstate->tupdesc->natts);
+	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) * 
+																								 fsstate->tupdesc->natts);
 	for (i = 0; i < fsstate->tupdesc->natts; i++) {
 		fsstate->table->column[i] = (TbColumn *) palloc0(sizeof(TbColumn));
 	}
 
 	fsstate->tbStmt = (TbStatement *) palloc0(sizeof(TbStatement));
-	GetTbStatement(user, fsstate->tbStmt);
+	GetTbStatement(user, fsstate->tbStmt, fsstate->use_fb_query);
 
 	TbSQLPrepare(fsstate->tbStmt, (SQLCHAR *)fsstate->query, SQL_NTS);
 	TbSQLNumResultCols(fsstate->tbStmt, &fsstate->tbStmt->res_col_cnt);
@@ -475,15 +438,17 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 		col->ind = palloc0(sizeof(SQLLEN) * fsstate->fetch_size);
 	}
 
-	if (!IsolationUsesXactSnapshot()) {
+	if (fsstate->use_fb_query && !IsolationUsesXactSnapshot()) {
 		ind = SQL_NTS;
 		TbSQLBindParameter(fsstate->tbStmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
 											 SQL_NUMERIC, 0, 0, fsstate->tbStmt->conn->tsn,
 											 sizeof(fsstate->tbStmt->conn->tsn), &ind);
 	}
 
-	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)fsstate->fetch_size, 0);
-  TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR, (SQLPOINTER)&fsstate->tuple_cnt, 0);
+	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE, 
+									 (SQLPOINTER)fsstate->fetch_size, 0);
+  TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR, 
+									 (SQLPOINTER)&fsstate->tuple_cnt, 0);
 	TbSQLExecute(fsstate->tbStmt);
 
 	for (i = 0; i < fsstate->tbStmt->res_col_cnt; i++) {
@@ -509,9 +474,8 @@ tibero_convert_to_pg(Oid pgtyp, int pgtypmod, TbColumn *column, int tuple_idx)
 	ReleaseSysCache(tuple);
 
 	valueDatum = CStringGetDatum((char *) &column->data[tuple_idx * column->col_size]);
-	value_datum = OidFunctionCall3(typeinput, valueDatum,
-								   ObjectIdGetDatum(pgtyp),
-								   Int32GetDatum(pgtypmod));
+	value_datum = OidFunctionCall3(typeinput, valueDatum, ObjectIdGetDatum(pgtyp),
+																 Int32GetDatum(pgtypmod));
 
 	return value_datum;
 }
