@@ -3,7 +3,7 @@
  * connection.h
  *		  Connection management functions for tibero_fdw
  *
- * Portions Copyright (c) 2022-2023, HyperSQL Research & Development Team
+ * Portions Copyright (c) 2022-2023, Tmax OpenSQL Research & Development Team
  *
  * IDENTIFICATION
  *		  contrib/tibero_fdw/connection.h

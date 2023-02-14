@@ -3,7 +3,7 @@
  * tibero_fdw.h
  *		  Foreign-data wrapper for remote Tibero servers
  *
- * Portions Copyright (c) 2022-2023, HyperSQL Research & Development Team
+ * Portions Copyright (c) 2022-2023, Tmax OpenSQL Research & Development Team
  *
  * IDENTIFICATION
  *		  contrib/tibero_fdw/tibero_fdw.h
