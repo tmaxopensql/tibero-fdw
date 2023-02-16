@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  *
  * connection.h
- *		  Connection management functions for tibero_fdw
+ *			Connection management functions for tibero_fdw
  *
  * Portions Copyright (c) 2022-2023, Tmax OpenSQL Research & Development Team
  *
  * IDENTIFICATION
- *		  contrib/tibero_fdw/connection.h
+ *			contrib/tibero_fdw/connection.h
  *
- *-------------------------------------------------------------------------
+ *------------------------------------------------------------------------------
  */
 #ifndef TIBERO_FDW_CONNECTION_H
 #define TIBERO_FDW_CONNECTION_H
@@ -20,23 +20,23 @@ typedef Oid ConnCacheKey;
 
 typedef struct ConnCacheEntry
 {
-  ConnCacheKey key;
+	ConnCacheKey key;
 
-  SQLHANDLE henv;
-  SQLHANDLE hdbc;
+	SQLHANDLE henv;
+	SQLHANDLE hdbc;
 
-  bool connected;
+	bool connected;
 
-  bool begin_remote_xact;
+	bool begin_remote_xact;
 
-  bool invalidated;
-  bool keep_connections;
+	bool invalidated;
+	bool keep_connections;
 
-  Oid serverid;
-  uint32 server_hashvalue;
-  uint32 mapping_hashvalue;
+	Oid serverid;
+	uint32 server_hashvalue;
+	uint32 mapping_hashvalue;
 
-  char tsn[32];
+	char tsn[32];
 
 	TimestampTz stmt_ts;
 
@@ -64,8 +64,8 @@ void TbSQLAllocHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type,
 void TbSQLFreeStmt(TbStatement *tbStmt, SQLUSMALLINT option);
 void TbSQLExecute(TbStatement *tbStmt);
 void TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no,
-                      	SQLSMALLINT input_output_type, SQLSMALLINT value_type,
-                        SQLSMALLINT param_type, SQLULEN col_size,
+												SQLSMALLINT input_output_type, SQLSMALLINT value_type,
+												SQLSMALLINT param_type, SQLULEN col_size,
 												SQLSMALLINT decimal_digits, SQLPOINTER param_value,
 												SQLLEN buffer_len, SQLLEN *str_len_or_ind);
 void TbSQLDescribeCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLCHAR *col_name,
@@ -82,7 +82,7 @@ void TbSQLFreeHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type, SQLHANDLE h
 void TbSQLSetConnectAttr(ConnCacheEntry *entry, SQLINTEGER attribute, 
 												 SQLPOINTER value, SQLINTEGER str_len);
 void TbSQLSetEnvAttr(ConnCacheEntry *entry, SQLINTEGER attribute, SQLPOINTER value,
-                		 SQLINTEGER str_len);
+ 							 			 SQLINTEGER str_len);
 void TbSQLNumResultCols(TbStatement *tbStmt, SQLSMALLINT *col_cnt);
 /********************************************************** tbcli wrapper }}} */
 
