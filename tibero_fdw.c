@@ -507,7 +507,7 @@ tibero_convert_to_pg(Oid pgtyp, int pgtypmod, TbColumn *column, int tuple_idx)
 }
 
 static bool
-NeedToFetch(TbFdwScanState *fsstate)
+need_fetch_tuples(TbFdwScanState *fsstate)
 {
 	return !fsstate->end_of_fetch &&
 				 (fsstate->tuple_cnt == TB_FDW_INIT_TUPLE_CNT ||
@@ -515,7 +515,7 @@ NeedToFetch(TbFdwScanState *fsstate)
 }
 
 static TupleTableSlot *
-GetNextTuple(ForeignScanState *node)
+get_next_tuple(ForeignScanState *node)
 {
 	TbFdwScanState *fsstate = (TbFdwScanState *) node->fdw_state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
@@ -529,7 +529,7 @@ GetNextTuple(ForeignScanState *node)
 }
 
 static void
-MakeTuples(ForeignScanState *node)
+make_tuples(ForeignScanState *node)
 {
 	TbFdwScanState *fsstate = (TbFdwScanState *) node->fdw_state;
 	TupleTableSlot *tupleSlot = node->ss.ss_ScanTupleSlot;
@@ -577,11 +577,11 @@ MakeTuples(ForeignScanState *node)
 }
 
 static void
-FetchTuples(ForeignScanState *node)
+fetch_tuples(ForeignScanState *node)
 {
 	TbFdwScanState *fsstate = (TbFdwScanState *) node->fdw_state;
 	TbSQLFetch(fsstate->tbStmt, &fsstate->cur_tuple_idx, &fsstate->end_of_fetch);
-	if (!fsstate->end_of_fetch) MakeTuples(node);
+	if (!fsstate->end_of_fetch) make_tuples(node);
 }
 
 static TupleTableSlot *
@@ -592,9 +592,9 @@ tiberoIterateForeignScan(ForeignScanState *node)
 	
 	set_sleep_on_sig_on();
 
-	if (NeedToFetch(fsstate))
-		FetchTuples(node);
-	result_tts = GetNextTuple(node);
+	if (need_fetch_tuples(fsstate))
+		fetch_tuples(node);
+	result_tts = get_next_tuple(node);
 
 	set_sleep_on_sig_off();
 
