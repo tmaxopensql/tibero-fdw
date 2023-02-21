@@ -52,14 +52,14 @@ typedef struct TbStatement
 
 /* {{{ tbcli wrapper **********************************************************/
 void TbSQLFetch(TbStatement *tbStmt, int *cur_tuple_idx, bool *end_of_fetch);
-void TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no, 
-									SQLSMALLINT target_type, SQLPOINTER target_value, 
+void TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no,
+									SQLSMALLINT target_type, SQLPOINTER target_value,
 									SQLLEN buffer_len, SQLLEN *str_len_or_ind);
 void TbSQLEndTran(ConnCacheEntry *entry, SQLSMALLINT completion_type);
-void TbSQLSetStmtAttr(TbStatement *tbStmt, SQLINTEGER attribute, SQLPOINTER value, 
+void TbSQLSetStmtAttr(TbStatement *tbStmt, SQLINTEGER attribute, SQLPOINTER value,
 											SQLINTEGER str_len);
 void TbSQLExecDirect(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len);
-void TbSQLAllocHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type, 
+void TbSQLAllocHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type,
 											SQLHANDLE input_handle, SQLHANDLE *output_handle);
 void TbSQLFreeStmt(TbStatement *tbStmt, SQLUSMALLINT option);
 void TbSQLExecute(TbStatement *tbStmt);
@@ -70,16 +70,16 @@ void TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no,
 												SQLLEN buffer_len, SQLLEN *str_len_or_ind);
 void TbSQLDescribeCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLCHAR *col_name,
 											SQLSMALLINT buffer_len, SQLSMALLINT *name_length,
-											SQLSMALLINT *data_type, SQLULEN *col_size, 
+											SQLSMALLINT *data_type, SQLULEN *col_size,
 											SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable);
 void TbSQLPrepare(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len);
-void TbSQLDriverConnect(ConnCacheEntry *entry, SQLHWND window_handle, 
-												SQLCHAR *in_conn_str, SQLSMALLINT str_len1, 
-												SQLCHAR *out_conn_str, SQLSMALLINT buffer_len, 
+void TbSQLDriverConnect(ConnCacheEntry *entry, SQLHWND window_handle,
+												SQLCHAR *in_conn_str, SQLSMALLINT str_len1,
+												SQLCHAR *out_conn_str, SQLSMALLINT buffer_len,
 												SQLSMALLINT *str_len2, SQLUSMALLINT driver_completion);
 void TbSQLDisconnect(ConnCacheEntry *entry);
 void TbSQLFreeHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type, SQLHANDLE handle);
-void TbSQLSetConnectAttr(ConnCacheEntry *entry, SQLINTEGER attribute, 
+void TbSQLSetConnectAttr(ConnCacheEntry *entry, SQLINTEGER attribute,
 												 SQLPOINTER value, SQLINTEGER str_len);
 void TbSQLSetEnvAttr(ConnCacheEntry *entry, SQLINTEGER attribute, SQLPOINTER value,
  							 			 SQLINTEGER str_len);

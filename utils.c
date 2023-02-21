@@ -37,7 +37,7 @@ static void sigabrt_handler(int signo);
 static void sigfpe_handler(int signo);
 
 inline void
-set_sleep_on_sig_on(void) 
+set_sleep_on_sig_on(void)
 {
 	use_sleep_on_sig = true;
 }
@@ -48,7 +48,7 @@ set_sleep_on_sig_off(void)
 	use_sleep_on_sig = false;
 }
 
-static void 
+static void
 sigsegv_handler(int signo)
 {
 	if (use_sleep_on_sig)
@@ -58,8 +58,8 @@ sigsegv_handler(int signo)
 	raise(signo);
 }
 
-static void 
-sigbus_handler(int signo) 
+static void
+sigbus_handler(int signo)
 {
 	if (use_sleep_on_sig)
 		sleep_on_sig(signo);
@@ -68,7 +68,7 @@ sigbus_handler(int signo)
 	raise(signo);
 }
 
-static void 
+static void
 sigabrt_handler(int signo)
 {
 	if (use_sleep_on_sig)
@@ -78,7 +78,7 @@ sigabrt_handler(int signo)
 	raise(signo);
 }
 
-static void 
+static void
 sigfpe_handler(int signo)
 {
 	if (use_sleep_on_sig)

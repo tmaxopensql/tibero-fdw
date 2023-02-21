@@ -54,7 +54,7 @@ typedef struct deparse_expr_ctx
 				appendStringInfo((buf), "%s%d.", REL_ALIAS_PREFIX, (varno))
 
 static void daprse_target_list(StringInfo buf, RangeTblEntry *rte, Index rtindex,
-															 Relation rel, bool is_returning, 
+															 Relation rel, bool is_returning,
 															 Bitmapset *attrs_used, bool qualify_col,
 															 List **retrieved_attrs);
 static void deparse_column_ref(StringInfo buf, int varno, int varattno,
@@ -100,7 +100,7 @@ void
 deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 														List *tlist, List *remote_conds, List *pathkeys,
 														bool has_final_sort, bool has_limit, bool is_subquery,
-														List **retrieved_attrs, List **params_list, 
+														List **retrieved_attrs, List **params_list,
 														bool use_fb_query)
 {
 	deparse_expr_ctx context;
@@ -136,7 +136,7 @@ deparse_select_sql(List *tlist, bool is_subquery, List **retrieved_attrs,
 	appendStringInfoString(buf, "SELECT ");
 
 	daprse_target_list(buf, rte, foreignrel->relid, rel, false,
-						fpinfo->attrs_used, false, retrieved_attrs);
+										 fpinfo->attrs_used, false, retrieved_attrs);
 
 	table_close(rel, NoLock);
 }
@@ -147,13 +147,13 @@ deparse_from_expr(List *quals, deparse_expr_ctx *context)
 	StringInfo buf = context->buf;
 	RelOptInfo *scanrel = context->scanrel;
 
-	Assert(!IS_UPPER_REL(context->foreignrel) || IS_JOIN_REL(scanrel) || 
+	Assert(!IS_UPPER_REL(context->foreignrel) || IS_JOIN_REL(scanrel) ||
 				 IS_SIMPLE_REL(scanrel));
 
 	appendStringInfoString(buf, " FROM ");
 	deparse_from_expr_for_rel(buf, context->root, scanrel,
 														(bms_membership(scanrel->relids) == BMS_MULTIPLE),
-														(Index) 0, NULL, context->params_list, 
+														(Index) 0, NULL, context->params_list,
 														context->use_fb_query);
 
 	if (quals != NIL) {
@@ -210,8 +210,7 @@ daprse_target_list(StringInfo buf, RangeTblEntry *rte, Index rtindex, Relation r
 			ADD_REL_QUALIFIER(buf, rtindex);
 		appendStringInfoString(buf, "ctid");
 
-		*retrieved_attrs = lappend_int(*retrieved_attrs,
-										 SelfItemPointerAttributeNumber);
+		*retrieved_attrs = lappend_int(*retrieved_attrs, SelfItemPointerAttributeNumber);
 	}
 
 	if (first && !is_returning)
@@ -298,7 +297,7 @@ deparse_column_ref(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 
 		appendStringInfoString(buf, "ROW(");
 		daprse_target_list(buf, rte, varno, rel, false, attrs_used, qualify_col,
-							&retrieved_attrs);
+											 &retrieved_attrs);
 		appendStringInfoChar(buf, ')');
 
 		if (qualify_col)
@@ -361,7 +360,7 @@ deparse_replation(StringInfo buf, Relation rel, bool use_fb_query)
 	if (owner_name == NULL) {
 		appendStringInfo(buf, "%s%s", quote_identifier(rel_name), flashback_clause);
 	} else {
-		appendStringInfo(buf, "%s.%s%s", quote_identifier(owner_name), 
+		appendStringInfo(buf, "%s.%s%s", quote_identifier(owner_name),
 										 quote_identifier(rel_name), flashback_clause);
 	}
 }

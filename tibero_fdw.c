@@ -142,8 +142,8 @@ static void tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel,
 /************************************************** FDW callback routines }}} */
 
 /* {{{ Helper functions *******************************************************/
-static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, 
-														JoinType jointype, RelOptInfo *outerrel, 
+static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel,
+														JoinType jointype, RelOptInfo *outerrel,
 														RelOptInfo *innerrel, JoinPathExtraData *extra);
 /******************************************************* Helper functions }}} */
 
@@ -275,7 +275,7 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 	} else {
 		if (baserel->tuples < 0) {
 			baserel->pages = 10;
-			baserel->tuples = (10 * BLCKSZ) / (baserel->reltarget->width + 
+			baserel->tuples = (10 * BLCKSZ) / (baserel->reltarget->width +
 																				 MAXALIGN(SizeofHeapTupleHeader));
 		}
 		set_baserel_size_estimates(root, baserel);
@@ -303,7 +303,7 @@ tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid
 	if (fpinfo->use_remote_estimate) {
 		/* TODO */
 	}
-	
+
 	set_sleep_on_sig_off();
 }
 
@@ -440,7 +440,7 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
 	fsstate->table = (TbTable *) palloc0(sizeof(TbTable));
-	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) * 
+	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) *
 																								 fsstate->tupdesc->natts);
 	for (i = 0; i < fsstate->tupdesc->natts; i++) {
 		fsstate->table->column[i] = (TbColumn *) palloc0(sizeof(TbColumn));
@@ -469,9 +469,9 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 											 sizeof(fsstate->tbStmt->conn->tsn), &ind);
 	}
 
-	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE, 
+	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE,
 									 (SQLPOINTER)fsstate->fetch_size, 0);
-	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR, 
+	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR,
 									 (SQLPOINTER)&fsstate->tuple_cnt, 0);
 	TbSQLExecute(fsstate->tbStmt);
 
@@ -589,7 +589,7 @@ tiberoIterateForeignScan(ForeignScanState *node)
 {
 	TbFdwScanState *fsstate = (TbFdwScanState *) node->fdw_state;
 	TupleTableSlot *result_tts = NULL;
-	
+
 	set_sleep_on_sig_on();
 
 	if (need_fetch_tuples(fsstate))
@@ -636,7 +636,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 }
 
 static void
-tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel, 
+tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel,
 													RelOptInfo *outerrel, RelOptInfo *innerrel,
 													JoinType jointype, JoinPathExtraData *extra)
 {

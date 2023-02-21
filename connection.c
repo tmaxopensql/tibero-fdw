@@ -30,7 +30,7 @@ static HTAB *ConnectionHash = NULL;
 static bool xact_got_connection = false;
 /******************************************************* Global variables }}} */
 
-void TbFdwReportError(int elevel, int sql_errcode, SQLRETURN rc, 
+void TbFdwReportError(int elevel, int sql_errcode, SQLRETURN rc,
 											ConnCacheEntry *conn);
 
 static void MakeTbConnection(ConnCacheEntry *conn, UserMapping *user);
@@ -55,12 +55,12 @@ BeginRemoteXact(TbStatement *tbStmt, bool isSerializable)
 }
 
 static void
-ConnectTbServer(ConnCacheEntry *conn, const char *host, const char *port, 
+ConnectTbServer(ConnCacheEntry *conn, const char *host, const char *port,
 								const char *dbname, const char *username, const char *password)
 {
 	char conn_str[512] = {0,};
 
-	Assert(host != NULL && port != NULL && dbname != NULL && username != NULL && 
+	Assert(host != NULL && port != NULL && dbname != NULL && username != NULL &&
 				 password != NULL);
 
 	snprintf(conn_str, sizeof(conn_str), "SERVER=%s;PORT=%s;DB=%s;UID=%s;PWD=%s",
@@ -70,7 +70,7 @@ ConnectTbServer(ConnCacheEntry *conn, const char *host, const char *port,
 	TbSQLSetEnvAttr(conn, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
 
 	TbSQLAllocHandle(conn, SQL_HANDLE_DBC, conn->henv, &conn->hdbc);
-	TbSQLDriverConnect(conn, 0, (SQLCHAR *)conn_str, SQL_NTS, NULL, 0, NULL, 
+	TbSQLDriverConnect(conn, 0, (SQLCHAR *)conn_str, SQL_NTS, NULL, 0, NULL,
 										 SQL_DRIVER_COMPLETE);
 
 	conn->connected = true;
@@ -92,7 +92,7 @@ DisconnectTbServer(ConnCacheEntry *conn)
 static bool
 NeedRemoteSnapshot(ConnCacheEntry *conn)
 {
-	return !IsolationUsesXactSnapshot() && 
+	return !IsolationUsesXactSnapshot() &&
 				 (conn->stmt_ts != GetCurrentStatementStartTimestamp());
 }
 
@@ -141,9 +141,9 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 
 		if (use_fb_query && NeedRemoteSnapshot(conn)) {
 			SQLUINTEGER len;
-			TbSQLExecDirect(tbStmt, (SQLCHAR *)"SELECT current_tsn FROM v$database", 
+			TbSQLExecDirect(tbStmt, (SQLCHAR *)"SELECT current_tsn FROM v$database",
 											SQL_NTS);
-			TbSQLBindCol(tbStmt, 1, SQL_C_CHAR, (SQLCHAR *)conn->tsn, 
+			TbSQLBindCol(tbStmt, 1, SQL_C_CHAR, (SQLCHAR *)conn->tsn,
 									 sizeof(conn->tsn), (long *)&len);
 			TbSQLFetch(tbStmt, NULL, NULL);
 			TbSQLFreeStmt(tbStmt, SQL_CLOSE);
@@ -192,9 +192,9 @@ MakeTbConnection(ConnCacheEntry *conn, UserMapping *user)
 	Assert(conn->connected == false);
 
 	conn->serverid = server->serverid;
-	conn->server_hashvalue = 
+	conn->server_hashvalue =
 		GetSysCacheHashValue1(FOREIGNSERVEROID, ObjectIdGetDatum(server->serverid));
-	conn->mapping_hashvalue = 
+	conn->mapping_hashvalue =
 		GetSysCacheHashValue1(USERMAPPINGOID, ObjectIdGetDatum(user->umid));
 	conn->invalidated = false;
 	conn->begin_remote_xact = false;
@@ -279,7 +279,7 @@ static void
 TbfdwSubxactCallback(SubXactEvent event, SubTransactionId mySubid,
 										 SubTransactionId parentSubid, void *arg)
 {
-	if (!xact_got_connection) 
+	if (!xact_got_connection)
 		return;
 
 	set_sleep_on_sig_on();
@@ -291,7 +291,7 @@ TbfdwSubxactCallback(SubXactEvent event, SubTransactionId mySubid,
 
 static void
 TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue)
-{	
+{
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *conn;
 
@@ -356,11 +356,11 @@ TbSQLFetch(TbStatement *tbStmt, int *cur_tuple_idx, bool *end_of_fetch)
 }
 
 void
-TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLSMALLINT target_type, 
-						 SQLPOINTER target_value, SQLLEN buffer_len, 
+TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLSMALLINT target_type,
+						 SQLPOINTER target_value, SQLLEN buffer_len,
 						 SQLLEN *str_len_or_ind)
 {
-	SQLRETURN rc = SQLBindCol(tbStmt->hstmt, col_no, target_type, target_value, 
+	SQLRETURN rc = SQLBindCol(tbStmt->hstmt, col_no, target_type, target_value,
 														buffer_len, str_len_or_ind);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
@@ -369,7 +369,7 @@ TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLSMALLINT target_type,
 	}
 }
 
-void 
+void
 TbSQLEndTran(ConnCacheEntry *conn, SQLSMALLINT completion_type)
 {
 	SQLRETURN rc = SQLEndTran(SQL_HANDLE_DBC, conn->hdbc, completion_type);
@@ -382,7 +382,7 @@ TbSQLEndTran(ConnCacheEntry *conn, SQLSMALLINT completion_type)
 }
 
 void
-TbSQLSetStmtAttr(TbStatement *tbStmt, SQLINTEGER attribute, SQLPOINTER value, 
+TbSQLSetStmtAttr(TbStatement *tbStmt, SQLINTEGER attribute, SQLPOINTER value,
 								 SQLINTEGER str_len)
 {
 	SQLRETURN rc = SQLSetStmtAttr(tbStmt->hstmt, attribute, value, str_len);
@@ -405,7 +405,7 @@ TbSQLExecDirect(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len)
 }
 
 void
-TbSQLAllocHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type, 
+TbSQLAllocHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type,
 								 SQLHANDLE input_handle, SQLHANDLE *output_handle)
 {
 	SQLRETURN rc = SQLAllocHandle(handle_type, input_handle, output_handle);
@@ -446,9 +446,9 @@ TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no,
 									 SQLSMALLINT decimal_digits, SQLPOINTER param_value,
 									 SQLLEN buffer_len, SQLLEN *str_len_or_ind)
 {
-	SQLRETURN rc = SQLBindParameter(tbStmt->hstmt, param_no, input_output_type, 
-																	value_type, param_type, col_size, 
-																	decimal_digits, param_value, buffer_len, 
+	SQLRETURN rc = SQLBindParameter(tbStmt->hstmt, param_no, input_output_type,
+																	value_type, param_type, col_size,
+																	decimal_digits, param_value, buffer_len,
 																	str_len_or_ind);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
@@ -457,20 +457,20 @@ TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no,
 	}
 }
 
-void 
+void
 TbSQLDescribeCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLCHAR *col_name,
 								 SQLSMALLINT buffer_len, SQLSMALLINT *name_length,
-								 SQLSMALLINT *data_type, SQLULEN *col_size, 
+								 SQLSMALLINT *data_type, SQLULEN *col_size,
 								 SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable)
 {
-	SQLRETURN rc = SQLDescribeCol(tbStmt->hstmt, col_no, col_name, buffer_len, 
-																name_length, data_type, col_size, 
+	SQLRETURN rc = SQLDescribeCol(tbStmt->hstmt, col_no, col_name, buffer_len,
+																name_length, data_type, col_size,
 																decimal_digits, nullable);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
-	}	
+	}
 }
 
 void
@@ -481,12 +481,12 @@ TbSQLPrepare(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len)
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
-	}	
+	}
 }
 
 void
 TbSQLDriverConnect(ConnCacheEntry *conn, SQLHWND window_handle, SQLCHAR *in_conn_str,
-									 SQLSMALLINT str_len1, SQLCHAR *out_conn_str, 
+									 SQLSMALLINT str_len1, SQLCHAR *out_conn_str,
 									 SQLSMALLINT buffer_len, SQLSMALLINT *str_len2,
 									 SQLUSMALLINT driver_completion)
 {
@@ -507,7 +507,7 @@ TbSQLDisconnect(ConnCacheEntry *conn)
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
-	}	
+	}
 }
 
 void
@@ -518,11 +518,11 @@ TbSQLFreeHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type, SQLHANDLE handle)
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
-	}		
+	}
 }
 
 void
-TbSQLSetConnectAttr(ConnCacheEntry *conn, SQLINTEGER attribute, 
+TbSQLSetConnectAttr(ConnCacheEntry *conn, SQLINTEGER attribute,
 									SQLPOINTER value, SQLINTEGER str_len)
 {
 	SQLRETURN rc = SQLSetConnectAttr(conn->hdbc, attribute, value, str_len);
@@ -530,11 +530,11 @@ TbSQLSetConnectAttr(ConnCacheEntry *conn, SQLINTEGER attribute,
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
-	}		
+	}
 }
 
 void
-TbSQLSetEnvAttr(ConnCacheEntry *conn, SQLINTEGER attribute, SQLPOINTER value, 
+TbSQLSetEnvAttr(ConnCacheEntry *conn, SQLINTEGER attribute, SQLPOINTER value,
 								SQLINTEGER str_len)
 {
 	SQLRETURN rc = SQLSetEnvAttr(conn->henv, attribute, value, str_len);
