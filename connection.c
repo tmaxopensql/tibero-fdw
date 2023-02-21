@@ -235,6 +235,8 @@ TbfdwXactCallback(XactEvent event, void *arg)
 	if (!xact_got_connection)
 		return;
 
+	set_sleep_on_sig_on();
+
 	hash_seq_init(&scan, ConnectionHash);
 	while ((conn = (ConnCacheEntry *) hash_seq_search(&scan))) {
 		if (conn->begin_remote_xact) {
@@ -269,6 +271,8 @@ TbfdwXactCallback(XactEvent event, void *arg)
 		}
 	}
 	xact_got_connection = false;
+
+	set_sleep_on_sig_off();
 }
 
 static void
@@ -278,7 +282,11 @@ TbfdwSubxactCallback(SubXactEvent event, SubTransactionId mySubid,
 	if (!xact_got_connection) 
 		return;
 
+	set_sleep_on_sig_on();
+
 	/* TODO */
+
+	set_sleep_on_sig_off();
 }
 
 static void
@@ -288,6 +296,8 @@ TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue)
 	ConnCacheEntry *conn;
 
 	Assert(cacheid == FOREIGNSERVEROID || cacheid == USERMAPPINGOID);
+
+	set_sleep_on_sig_on();
 
 	hash_seq_init(&scan, ConnectionHash);
 	while ((conn = (ConnCacheEntry *) hash_seq_search(&scan))) {
@@ -301,6 +311,8 @@ TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue)
 				conn->invalidated = true;
 		}
 	}
+
+	set_sleep_on_sig_off();
 }
 
 void
