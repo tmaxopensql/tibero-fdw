@@ -33,7 +33,7 @@ static bool xact_got_connection = false;
 void TbFdwReportError(int elevel, int sql_errcode, SQLRETURN rc, 
 											ConnCacheEntry *conn);
 
-static void MakeNewConnection(ConnCacheEntry *conn, UserMapping *user);
+static void MakeTbConnection(ConnCacheEntry *conn, UserMapping *user);
 
 static void TbfdwXactCallback(XactEvent event, void *arg);
 static void TbfdwSubxactCallback(SubXactEvent event, SubTransactionId mySubid,
@@ -132,7 +132,7 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 			DisconnectTbServer(conn);
 
 		if (conn->connected == false)
-			MakeNewConnection(conn, user);
+			MakeTbConnection(conn, user);
 
 		TbSQLAllocHandle(conn, SQL_HANDLE_STMT, conn->hdbc, &tbStmt->hstmt);
 
@@ -172,14 +172,14 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 
 	if (retry) {
 		DisconnectTbServer(conn);
-		MakeNewConnection(conn, user);
+		MakeTbConnection(conn, user);
 		TbSQLAllocHandle(conn, SQL_HANDLE_STMT, conn->hdbc, &tbStmt->hstmt);
 		BeginRemoteXact(tbStmt, IsolationUsesXactSnapshot());
 	}
 }
 
 static void
-MakeNewConnection(ConnCacheEntry *conn, UserMapping *user)
+MakeTbConnection(ConnCacheEntry *conn, UserMapping *user)
 {
 	ForeignServer *server = GetForeignServer(user->serverid);
 	ListCell	 *lc;
