@@ -561,9 +561,14 @@ make_tuples(ForeignScanState *node)
 			Oid pgtype = TupleDescAttr(attinmeta->tupdesc, attnum)->atttypid;
 			int32 pgtypmod = TupleDescAttr(attinmeta->tupdesc, attnum)->atttypmod;
 
-			nulls[attnum] = false;
-			dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod,
-																						 fsstate->table->column[attid++], i);
+			if (fsstate->table->column[attid]->ind[i] == SQL_NULL_DATA) {
+				nulls[attnum] = true;
+			} else {
+				nulls[attnum] = false;
+				dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod,
+																							 fsstate->table->column[attid], i);
+			}
+			attid++;
 		}
 		fsstate->tuples[i] = heap_form_tuple(attinmeta->tupdesc, dvalues, nulls);
 

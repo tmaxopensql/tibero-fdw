@@ -419,7 +419,6 @@ TbSQLAllocHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type,
 void
 TbSQLFreeStmt(TbStatement *tbStmt, SQLUSMALLINT option)
 {
-	/* XXX SQL_DROP을 쓰는 경우가 필요한지 확인하기 */
 	SQLRETURN rc = SQLFreeStmt(tbStmt->hstmt, option);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
