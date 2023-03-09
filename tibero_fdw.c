@@ -457,7 +457,7 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 		TbSQLDescribeCol(fsstate->tbStmt, (SQLSMALLINT)i + 1, col->col_name,
 										 sizeof(col->col_name), &col->col_name_len, &col->data_type,
 										 &col->col_size, &col->scale, &col->nullable);
-
+		col->col_size++;
 		col->data = palloc0(sizeof(unsigned char) * col->col_size * fsstate->fetch_size);
 		col->ind = palloc0(sizeof(SQLLEN) * fsstate->fetch_size);
 	}
@@ -563,7 +563,7 @@ make_tuples(ForeignScanState *node)
 
 			if (fsstate->table->column[attid]->ind[i] == SQL_NULL_DATA) {
 				nulls[attnum] = true;
-				dvalues[attnum] = (Datum) NULL;
+				dvalues[attnum] = PointerGetDatum(NULL);
 			} else {
 				nulls[attnum] = false;
 				dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod,
