@@ -12,7 +12,7 @@ env:
   BUILD_OS: centos7
 
 jobs:
-  deploy-tibero-fdw-centos:
+  deploy-tibero-fdw-centos7:
     runs-on: ubuntu-20.04
     container:
       image: centos:7

@@ -12,10 +12,10 @@ env:
   BUILD_OS: redhat7
 
 jobs:
-  deploy-tibero-fdw-centos:
+  deploy-tibero-fdw-redhat7:
     runs-on: ubuntu-20.04
     container:
-      image: registry.access.redhat.com/rhel7
+      image: centos:7
     
     steps:      
     - name: home
@@ -85,4 +85,3 @@ jobs:
         else
           echo "No changes to commit"
         fi
-

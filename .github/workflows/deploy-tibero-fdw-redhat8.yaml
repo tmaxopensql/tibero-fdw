@@ -20,13 +20,9 @@ jobs:
     steps:      
     - name: home
       run: |
-        cd /home  
+        cd /home
+        sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
         
-    - name: Stop rhsmcertd.service
-      run: |
-        service rhsmcertd stop
-        chkconfig rhsmcertd off
-      
     - name: Install PostgreSQL
       run: |
         yum update -y
