@@ -563,6 +563,7 @@ make_tuples(ForeignScanState *node)
 
 			if (fsstate->table->column[attid]->ind[i] == SQL_NULL_DATA) {
 				nulls[attnum] = true;
+				dvalues[attnum] = (Datum) NULL;
 			} else {
 				nulls[attnum] = false;
 				dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod,
