@@ -1,22 +1,25 @@
-name: deploy-tibero-fdw-Ubuntu20.04 
+name: deploy-tibero-fdw-ubuntu20.04 
 
 on:
-  workflow_dispatch: #for dispatch
-  push:
-    branches:
-      - main     
+  workflow_call:
+    secrets:
+      git-access-token:
+        description: 'Access token for Github'
+        required: true
+
 
 env: 
-  DEPLOY_REPO: hypersql/tibero-fdw-dist
+  DEPLOY_REPO: tmaxopensql/tibero-fdw-dist
+  BUILD_OS: ubuntu20.04
 
 jobs:
-  deploy-Tiberofdw-Ubuntu:
+  deploy-tibero-fdw-ubuntu:
     runs-on: ubuntu-20.04
     
-    steps:
-    - name: Checkout tibero-fdw source code
+    steps:      
+    - name: Checkout repository
       uses: actions/checkout@v2
-      
+    
     - name: Add PGDG repository
       run: |
         sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
@@ -30,10 +33,7 @@ jobs:
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
-        echo $LD_LIBRARY_PATH
-        ls $GITHUB_WORKSPACE/lib
         make USE_PGXS=1
-        ldd tibero_fdw.so
       
         
     - name: Checkout deploy replository
@@ -41,7 +41,7 @@ jobs:
       with:
         repository: ${{ env.DEPLOY_REPO }}
         ref: main
-        token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+        token: ${{ secrets.git-access-token }}
         path: tibero-fdw-dist
     
     - name: Deploy to tibero-fdw-dist
@@ -49,18 +49,17 @@ jobs:
         git config --global user.email "${{ github.actor }}@users.noreply.github.com"
         git config --global user.name "${{ github.actor }}"
         
-        cp tibero_fdw.so tibero-fdw-dist/ubuntu20.04/
-        cp tibero_fdw.control tibero-fdw-dist/ubuntu20.04/
-        cp *.sql tibero-fdw-dist/ubuntu20.04/
-        cp Makefile tibero-fdw-dist/ubuntu20.04/
-        cp setenv.sh tibero-fdw-dist/ubuntu20.04/
-        cp -r sql/ tibero-fdw-dist/ubuntu20.04/
-        cp -r expected/ tibero-fdw-dist/ubuntu20.04/
+        cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp tibero_fdw.control tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp *.sql tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp Makefile tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp setenv.sh tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp -r sql/ tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp -r expected/ tibero-fdw-dist/${{ env.BUILD_OS }}/
         cd lib/
-        cp * ../tibero-fdw-dist/ubuntu20.04/lib/
+        cp * ../tibero-fdw-dist/${{ env.BUILD_OS }}/lib/
         
-        cd ../tibero-fdw-dist/ubuntu20.04/
-        ls
+        cd ../tibero-fdw-dist/${{ env.BUILD_OS }}/
         git add .
         if [[ -n $(git diff --cached --exit-code) ]]; then
           git commit -m "Deploy libraries"

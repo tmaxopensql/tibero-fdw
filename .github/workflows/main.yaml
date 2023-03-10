@@ -1,0 +1,32 @@
+name: Main action
+
+on:                                                                              
+  workflow_dispatch:                                                             
+  push:
+    branches:                                                                    
+      - main
+jobs:
+  deploy-tibero-fdw-ubuntu:
+    uses: ./.github/workflows/deploy-tibero-fdw-ubuntu20.04.yaml
+    secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+
+  deploy-tibero-fdw-centos7:
+    uses: ./.github/workflows/deploy-tibero-fdw-centos7.yaml
+    secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+
+  deploy-tibero-fdw-centos8:
+    uses: ./.github/workflows/deploy-tibero-fdw-centos8.yaml
+    secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+
+  deploy-tibero-fdw-redhat7:
+    uses: ./.github/workflows/deploy-tibero-fdw-redhat7.yaml
+    secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+
+  deploy-tibero-fdw-redhat8:
+    uses: ./.github/workflows/deploy-tibero-fdw-redhat8.yaml
+    secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
