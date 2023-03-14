@@ -26,9 +26,9 @@ jobs:
     - name: Install PostgreSQL
       run: |
         yum update -y
-        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
-        yum install -y centos-release-scl-rh epel-release devtoolset-7 llvm-toolset-7 llvm-toolset-7-llvm-static make gcc git
+        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm
+        yum -y install redhat-rpm-config gcc make git
         yum install -y postgresql14 postgresql14-server postgresql14-devel      
           
     - name: Checkout repository
