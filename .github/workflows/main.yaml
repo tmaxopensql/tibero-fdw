@@ -4,7 +4,7 @@ on:
   workflow_dispatch:                                                             
   push:
     branches:                                                                    
-      - main
+      - feature/add-github-action
 jobs:
   deploy-tibero-fdw-ubuntu:
     uses: ./.github/workflows/deploy-tibero-fdw-ubuntu20.04.yaml
