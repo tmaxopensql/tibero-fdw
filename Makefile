@@ -11,9 +11,13 @@ SHLIB_LINK = -ltbcli
 EXTENSION = tibero_fdw
 DATA = tibero_fdw--1.0.sql
 
-REGRESS = tibero_fdw
+TESTS = $(wildcard sql/*.sql)
+REGRESS = $(patsubst sql/%.sql, %, $(TESTS))
+REGRESS_OPTS = --load-language plpgsql
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
+test:
+	sql/run_test.sh $(TESTS)
