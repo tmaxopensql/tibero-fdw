@@ -30,7 +30,7 @@ BEGIN;
       nvc_eng TEXT,
       nvc_spc TEXT,
       rwid TEXT,
---      nm NUMERIC,
+      nm NUMERIC,
       flt FLOAT,
       dt DATE,
       ts TIMESTAMP,
@@ -56,7 +56,7 @@ BEGIN;
       nvc_eng TEXT,
       nvc_spc TEXT,
       rwid TEXT,
---      nm NUMERIC,
+      nm NUMERIC,
       flt FLOAT,
       dt DATE,
       ts TIMESTAMP,
@@ -91,30 +91,6 @@ BEGIN;
       idts INTERVAL DAY TO SECOND
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
 
-  CREATE OR REPLACE FUNCTION print_result( TEXT )
-  RETURNS VOID AS $$
-    DECLARE
-      item record;
-      sqlquery  text;
-    BEGIN
-      sqlquery := 'SELECT * FROM ' || $1 || ' LIMIT 1';
-      FOR item IN EXECUTE sqlquery LOOP
-        RAISE NOTICE 'Value: %', item;
-      END LOOP;
-    END;
-  $$ LANGUAGE plpgsql;
-
-  CREATE OR REPLACE FUNCTION print_exec( TEXT )
-  RETURNS VOID AS $$
-    DECLARE
-      item record;
-    BEGIN
-      FOR item IN EXECUTE $1 LOOP
-        RAISE NOTICE 'Value: %', item;
-      END LOOP;
-    END;
-  $$ LANGUAGE plpgsql;
-
   -- TEST 1:
   SELECT lives_ok('SELECT * FROM jft1');
 
@@ -122,8 +98,7 @@ BEGIN;
   SELECT lives_ok('SELECT * FROM jft2');
 
   -- TEST 3:
-  SELECT pass();
-  --SELECT lives_ok('SELECT * FROM jft3');
+  SELECT lives_ok('SELECT * FROM jft3');
 
   -- TEST 4: 테이블 2개 (jft1, jft2) JOIN 쿼리 플랜 검증
   SELECT results_eq(
@@ -282,7 +257,7 @@ BEGIN;
       '  Output: jt2.dt, jft3.dt',
       '  Hash Cond: (jt2.dt = jft3.dt)',
       '  ->  Foreign Scan on public.jft2 jt2',
-      '        Output: jt2.c_kor, jt2.c_eng, jt2.c_spc, jt2.nc_kor, jt2.nc_eng, jt2.nc_spc, jt2.vc_kor, jt2.vc_eng, jt2.vc_spc, jt2.vc2_kor, jt2.vc2_eng, jt2.vc2_spc, jt2.nvc_kor, jt2.nvc_eng, jt2.nvc_spc, jt2.rwid, jt2.flt, jt2.dt, jt2.ts, jt2.tsz, jt2.iytm, jt2.idts',
+      '        Output: jt2.c_kor, jt2.c_eng, jt2.c_spc, jt2.nc_kor, jt2.nc_eng, jt2.nc_spc, jt2.vc_kor, jt2.vc_eng, jt2.vc_spc, jt2.vc2_kor, jt2.vc2_eng, jt2.vc2_spc, jt2.nvc_kor, jt2.nvc_eng, jt2.nvc_spc, jt2.rwid, jt2.nm, jt2.flt, jt2.dt, jt2.ts, jt2.tsz, jt2.iytm, jt2.idts',
       '        Filter: (jt2.dt > ''2022-01-01''::date)',
       '  ->  Hash',
       '        Output: jft3.dt',
@@ -395,7 +370,7 @@ BEGIN;
       '        Output: jt1.c_spc, jt2.c_spc',
       '        Hash Cond: (jt1.idts = jt2.idts)',
       '        ->  Foreign Scan on public.jft1 jt1',
-      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
+      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Hash',
       '              Output: jt2.c_spc, jt2.idts',
       '              ->  Foreign Scan on public.jft2 jt2',
@@ -428,7 +403,7 @@ BEGIN;
       '        Output: jt1.flt, jt2.flt',
       '        Hash Cond: (jt1.flt = jt2.flt)',
       '        ->  Foreign Scan on public.jft1 jt1',
-      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
+      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Hash',
       '              Output: jt2.flt',
       '              ->  Foreign Scan on public.jft2 jt2',
@@ -595,7 +570,7 @@ BEGIN;
       '        Output: jt1.nvc_kor, jt2.nvc_eng, jt2.nvc_kor',
       '        Hash Cond: (jt1.nvc_kor = jt2.nvc_kor)',
       '        ->  Foreign Scan on public.jft1 jt1',
-      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
+      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Hash',
       '              Output: jt2.nvc_eng, jt2.nvc_kor',
       '              ->  Foreign Scan on public.jft2 jt2',
@@ -633,7 +608,7 @@ BEGIN;
       '        Output: jt1.nc_kor, jt2.nc_eng, jt2.nc_kor',
       '        Hash Cond: (jt1.nc_kor = jt2.nc_kor)',
       '        ->  Foreign Scan on public.jft1 jt1',
-      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
+      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Hash',
       '              Output: jt2.nc_eng, jt2.nc_kor',
       '              ->  Foreign Scan on public.jft2 jt2',
@@ -756,9 +731,9 @@ BEGIN;
       '  ->  Nested Loop',
       '        Output: jt1.flt, jt2.flt',
       '        ->  Foreign Scan on public.jft1 jt1',
-      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
+      '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Foreign Scan on public.jft2 jt2',
-      '              Output: jt2.c_kor, jt2.c_eng, jt2.c_spc, jt2.nc_kor, jt2.nc_eng, jt2.nc_spc, jt2.vc_kor, jt2.vc_eng, jt2.vc_spc, jt2.vc2_kor, jt2.vc2_eng, jt2.vc2_spc, jt2.nvc_kor, jt2.nvc_eng, jt2.nvc_spc, jt2.rwid, jt2.flt, jt2.dt, jt2.ts, jt2.tsz, jt2.iytm, jt2.idts'
+      '              Output: jt2.c_kor, jt2.c_eng, jt2.c_spc, jt2.nc_kor, jt2.nc_eng, jt2.nc_spc, jt2.vc_kor, jt2.vc_eng, jt2.vc_spc, jt2.vc2_kor, jt2.vc2_eng, jt2.vc2_spc, jt2.nvc_kor, jt2.nvc_eng, jt2.nvc_spc, jt2.rwid, jt2.nm, jt2.flt, jt2.dt, jt2.ts, jt2.tsz, jt2.iytm, jt2.idts'
     ]
   );
 
