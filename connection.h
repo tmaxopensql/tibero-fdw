@@ -86,6 +86,6 @@ void TbSQLSetEnvAttr(ConnCacheEntry *entry, SQLINTEGER attribute, SQLPOINTER val
 void TbSQLNumResultCols(TbStatement *tbStmt, SQLSMALLINT *col_cnt);
 /********************************************************** tbcli wrapper }}} */
 
-void GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query);
+void get_tb_statement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query);
 
 #endif							/* TIBERO_FDW_CONNECTION_H */
