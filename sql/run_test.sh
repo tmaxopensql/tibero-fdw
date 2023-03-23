@@ -5,8 +5,8 @@ TIBERO_USER="'tibero'"
 TIBERO_PASS="'tmax'"
 TIBERO_DB="'tibero'"
 
-POSTGRES_USER="postgres"
-POSTGRES_DB="postgres"
+POSTGRES_USER="yhjeon"
+POSTGRES_DB="dvdrental"
 
 if [ $# -eq 0 ]
 then

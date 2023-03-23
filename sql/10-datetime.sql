@@ -2,7 +2,7 @@
 BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
 
-  SELECT plan(20);
+  SELECT plan(28);
 
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
@@ -22,19 +22,16 @@ BEGIN;
       ts TIMESTAMP,
       ts1 TIMESTAMP,
       ts6 TIMESTAMP,
-      ts9 TIMESTAMP,
       ts_bc TIMESTAMP,
       ts_ad TIMESTAMP,
       tsz TIMESTAMP WITH TIME ZONE,
       tsz1 TIMESTAMP WITH TIME ZONE,
       tsz6 TIMESTAMP WITH TIME ZONE,
-      tsz9 TIMESTAMP WITH TIME ZONE,
       tsz_bc TIMESTAMP WITH TIME ZONE,
       tsz_ad TIMESTAMP WITH TIME ZONE,
       tslz TIMESTAMP WITH TIME ZONE,
       tslz1 TIMESTAMP WITH TIME ZONE,
       tslz6 TIMESTAMP WITH TIME ZONE,
-      tslz9 TIMESTAMP WITH TIME ZONE,
       tslz_bc TIMESTAMP WITH TIME ZONE,
       tslz_ad TIMESTAMP WITH TIME ZONE
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
@@ -43,22 +40,16 @@ BEGIN;
     (SELECT TO_CHAR(dt, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
     '2023-01-01 00:00:00.000000'
   );
-
-
-  SELECT pass();
-  SELECT pass();
-
-  /*
+  
   SELECT is(
-    (SELECT TO_CHAR(dt_bc9999, 'A.D. YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
+    (SELECT TO_CHAR(dt_bc9999, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
     'bc9999-01-01 00:00:00.000000'
   );
 
   SELECT is(
-    (SELECT TO_CHAR(dt_ad9999, 'A.D. YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
+    (SELECT TO_CHAR(dt_ad9999, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
     'ad9999-01-01 00:00:00.000000'
   );
-  */
 
   SELECT is(
     (SELECT TO_CHAR(dt_detail, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
@@ -80,9 +71,6 @@ BEGIN;
     '2023-01-01 12:34:56.123456'
   );
 
-  SELECT pass();
-  SELECT pass();
-  /*
   -- TEST 8:
   SELECT is(
     (SELECT TO_CHAR(ts_bc, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
@@ -94,7 +82,6 @@ BEGIN;
     (SELECT TO_CHAR(ts_ad, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
     'ad9999-01-01 12:34:56.123456'
   );
-  */
 
   -- TEST 10:
   SELECT is(
@@ -114,21 +101,17 @@ BEGIN;
     '2023-01-01 12:34:56.123456'
   );
 
-  SELECT pass();
-  SELECT pass();
-  /*
   -- TEST 13:
   SELECT is(
     (SELECT TO_CHAR(tsz_bc, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 00:00:00.000000'
+    'bc9999-01-01 12:34:56.123456'
   );
 
   -- TEST 14:
   SELECT is(
     (SELECT TO_CHAR(tsz_ad, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 00:00:00.000000'
+    'ad9999-01-01 12:34:56.123456'
   );
-  */
 
   -- TEST 15: WITH LOCAL TIME ZONE 옵션으로 생성된 Column 변환 확인
   -- KST를 항상 전제하는 건지? (Tibero에서 삽입할 때 12:34:56, 변환하면 21:34:56)
@@ -167,6 +150,7 @@ BEGIN;
   */
 
   -- INTERVAL 관련 테스트 케이스
+  -- INTERVAL '11-05' YEAR TO MONTH 형태로 Tibero에 저장된 Interval 값을 뒷자리가 짤리는 에러가 있음.
 
   CREATE FOREIGN TABLE d_ft2 (
       iytm INTERVAL YEAR TO MONTH,
@@ -178,6 +162,182 @@ BEGIN;
     'SELECT * FROM d_ft2'
   );
 
+  -- Tibero DATE <-> Postgres TIMESTAMP 호환 검증
+  CREATE FOREIGN TABLE d_ft3 (
+      dt TIMESTAMP,
+      dt_bc9999 TIMESTAMP,
+      dt_ad9999 TIMESTAMP,
+      dt_detail TIMESTAMP,
+      ts TIMESTAMP,
+      ts1 TIMESTAMP,
+      ts6 TIMESTAMP,
+      ts_bc TIMESTAMP,
+      ts_ad TIMESTAMP,
+      tsz TIMESTAMP,
+      tsz1 TIMESTAMP,
+      tsz6 TIMESTAMP,
+      tsz_bc TIMESTAMP,
+      tsz_ad TIMESTAMP,
+      tslz TIMESTAMP,
+      tslz1 TIMESTAMP,
+      tslz6 TIMESTAMP,
+      tslz_bc TIMESTAMP,
+      tslz_ad TIMESTAMP
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+
+  -- TEST 21:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft3'
+  );
+
+  -- Tibero DATE <-> Postgres CHAR 호환 검증
+  CREATE FOREIGN TABLE d_ft4 (
+      dt CHAR(20),
+      dt_bc9999 CHAR(20),
+      dt_ad9999 CHAR(20),
+      dt_detail CHAR(20),
+      ts CHAR(30),
+      ts1 CHAR(30),
+      ts6 CHAR(30),
+      ts_bc CHAR(30),
+      ts_ad CHAR(30),
+      tsz CHAR(30),
+      tsz1 CHAR(30),
+      tsz6 CHAR(30),
+      tsz_bc CHAR(30),
+      tsz_ad CHAR(30),
+      tslz CHAR(30),
+      tslz1 CHAR(30),
+      tslz6 CHAR(30),
+      tslz_bc CHAR(30),
+      tslz_ad CHAR(30)
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');  
+
+  -- TEST 22:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft4'
+  );
+
+  -- Tibero DATE <-> Postgres VARCHAR 호환 검증
+  CREATE FOREIGN TABLE d_ft5 (
+      dt VARCHAR(20),
+      dt_bc9999 VARCHAR(20),
+      dt_ad9999 VARCHAR(20),
+      dt_detail VARCHAR(20),
+      ts VARCHAR(30),
+      ts1 VARCHAR(30),
+      ts6 VARCHAR(30),
+      ts_bc VARCHAR(30),
+      ts_ad VARCHAR(30),
+      tsz VARCHAR(30),
+      tsz1 VARCHAR(30),
+      tsz6 VARCHAR(30),
+      tsz_bc VARCHAR(30),
+      tsz_ad VARCHAR(30),
+      tslz VARCHAR(30),
+      tslz1 VARCHAR(30),
+      tslz6 VARCHAR(30),
+      tslz_bc VARCHAR(30),
+      tslz_ad VARCHAR(30)
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+
+  -- TEST 23:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft5'
+  );
+
+  -- Tibero DATE <-> Postgres TEXT 호환 검증
+  CREATE FOREIGN TABLE d_ft6 (
+      dt TEXT,
+      dt_bc9999 TEXT,
+      dt_ad9999 TEXT,
+      dt_detail TEXT,
+      ts TEXT,
+      ts1 TEXT,
+      ts6 TEXT,
+      ts_bc TEXT,
+      ts_ad TEXT,
+      tsz TEXT,
+      tsz1 TEXT,
+      tsz6 TEXT,
+      tsz_bc TEXT,
+      tsz_ad TEXT,
+      tslz TEXT,
+      tslz1 TEXT,
+      tslz6 TEXT,
+      tslz_bc TEXT,
+      tslz_ad TEXT
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+
+  -- TEST 24:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft6'
+  );
+
+ -- Tibero DATE <-> Postgres DATE 호환 검증
+  CREATE FOREIGN TABLE d_ft7 (
+      dt DATE,
+      dt_bc9999 DATE,
+      dt_ad9999 DATE,
+      dt_detail DATE,
+      ts DATE,
+      ts1 DATE,
+      ts6 DATE,
+      ts_bc DATE,
+      ts_ad DATE,
+      tsz DATE,
+      tsz1 DATE,
+      tsz6 DATE,
+      tsz_bc DATE,
+      tsz_ad DATE,
+      tslz DATE,
+      tslz1 DATE,
+      tslz6 DATE,
+      tslz_bc DATE,
+      tslz_ad DATE
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+
+  -- TEST 25:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft7'
+  );
+
+  ------------------------------------------------------
+  -- SELECT Data type valid matching range INTERVAL
+  ------------------------------------------------------
+
+  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
+  CREATE FOREIGN TABLE d_ft8 (
+    iytm    CHAR(50),
+    idts    CHAR(50)
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+
+  -- TEST 26:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft8'
+  );
+
+  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
+  CREATE FOREIGN TABLE d_ft9 (
+    iytm    VARCHAR(50),
+    idts    VARCHAR(50)
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+
+  -- TEST 27:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft9'
+  );
+
+  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
+  CREATE FOREIGN TABLE d_ft10 (
+    iytm    TEXT,
+    idts    TEXT
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+
+  -- TEST 28:
+  SELECT lives_ok(
+    'SELECT * FROM d_ft10'
+  );
 
   -- Finish the tests and clean up.
   SELECT * FROM finish();
