@@ -13,30 +13,6 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  CREATE OR REPLACE FUNCTION print_result( TEXT )
-  RETURNS VOID AS $$
-    DECLARE
-      item record;
-      sqlquery  text;
-    BEGIN
-      sqlquery := 'SELECT * FROM ' || $1 || ' ';
-      FOR item IN EXECUTE sqlquery LOOP
-        RAISE NOTICE 'Value: %', item;
-      END LOOP;
-    END;
-  $$ LANGUAGE plpgsql;
-
-  CREATE OR REPLACE FUNCTION print_exec( TEXT )
-  RETURNS VOID AS $$
-    DECLARE
-      item record;
-    BEGIN
-      FOR item IN EXECUTE $1 LOOP
-        RAISE NOTICE 'Value: %', item;
-      END LOOP;
-    END;
-  $$ LANGUAGE plpgsql;
-
   CREATE FOREIGN TABLE math_func_test_table (
       nb_default NUMERIC,
       nb_380 NUMERIC(38,0),
