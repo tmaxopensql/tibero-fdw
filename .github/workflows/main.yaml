@@ -1,10 +1,9 @@
 name: Main action
 
-on:                                                                              
-  workflow_dispatch:                                                             
-  push:
-    branches:                                                                    
-      - main
+on:
+  release:
+    types: [published]
+
 jobs:
   deploy-tibero-fdw-ubuntu:
     uses: ./.github/workflows/deploy-tibero-fdw-ubuntu20.04.yaml
@@ -29,4 +28,9 @@ jobs:
   deploy-tibero-fdw-redhat8:
     uses: ./.github/workflows/deploy-tibero-fdw-redhat8.yaml
     secrets: 
+      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+
+  update-release-in-dist:
+    uses: ./.github/workflows/update-release-in-dist.yaml
+    secrets:
       git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
