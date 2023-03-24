@@ -1,10 +1,9 @@
 name: Main action
 
-on:                                                                              
-  workflow_dispatch:                                                             
-  push:
-    branches:                                                                    
-      - main
+on:
+  release:
+    types: [published]
+
 jobs:
   deploy-tibero-fdw-ubuntu:
     uses: ./.github/workflows/deploy-tibero-fdw-ubuntu20.04.yaml
