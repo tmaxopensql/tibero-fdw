@@ -2,7 +2,7 @@
 BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
 
-  SELECT * FROM no_plan();
+  SELECT plan(10);
 
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
@@ -52,6 +52,7 @@ BEGIN;
       nvc2_spc_full TEXT
   ) SERVER server_name OPTIONS (owner_name 'tibero', table_name 't1');
 
+  -- TEST 1: 문자열 Concatenate (||) 함수
   SELECT results_eq('
     SELECT c_kor || c_eng || c_spc || c_kor_full || c_eng_full || c_spc_full || nc_kor || nc_eng ||
   nc_spc || nc_kor_full || nc_eng_full || nc_spc_full || vc_kor || vc_eng || vc_spc ||
@@ -65,6 +66,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 2: bit_length() 함수
   SELECT results_eq('
     SELECT
       bit_length(c_kor),
@@ -144,6 +146,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 3: char_length() 함수
   SELECT results_eq('
     SELECT
       char_length(c_kor),
@@ -223,6 +226,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 4: lower() 함수
   SELECT results_eq('
     SELECT
       lower(c_kor),
@@ -302,6 +306,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 5: octet_length() 함수
   SELECT results_eq('
     SELECT
       octet_length(c_kor),
@@ -381,94 +386,95 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 6: overlay() 함수
   SELECT results_eq('
     SELECT
-      overlay(c_kor placing '하' from 1 for 2), c_kor,
-      overlay(c_eng placing 'z' from 1 for 2), c_eng,
-      overlay(c_spc placing '+' from 1 for 2), c_spc,
-      overlay(c_kor_full placing '하' from 1 for 7), c_kor_full,
-      overlay(c_eng_full placing 'z' from 1 for 7), c_eng_full,
-      overlay(c_spc_full placing '+' from 1 for 7), c_spc_full,
-      overlay(nc_kor placing '하' from 1 for 2), nc_kor,
-      overlay(nc_eng placing 'z' from 1 for 2), nc_eng,
-      overlay(nc_spc placing '+' from 1 for 2), nc_spc,
-      overlay(nc_kor_full placing '하' from 1 for 7), nc_kor_full,
-      overlay(nc_eng_full placing 'z' from 1 for 7), nc_eng_full,
-      overlay(nc_spc_full placing '+' from 1 for 7), nc_spc_full,
-      overlay(vc_kor placing '하' from 1 for 2), vc_kor,
-      overlay(vc_eng placing 'z' from 1 for 2), vc_eng,
-      overlay(vc_spc placing '+' from 1 for 2), vc_spc,
-      overlay(vc_kor_full placing '하' from 1 for 7), vc_kor_full,
-      overlay(vc_eng_full placing 'z' from 1 for 7), vc_eng_full,
-      overlay(vc_spc_full placing '+' from 1 for 7), vc_spc_full,
-      overlay(vc2_kor placing '하' from 1 for 2), vc2_kor,
-      overlay(vc2_eng placing 'z' from 1 for 2), vc2_eng,
-      overlay(vc2_spc placing '+' from 1 for 2), vc2_spc,
-      overlay(vc2_kor_full placing '하' from 1 for 7), vc2_kor_full,
-      overlay(vc2_eng_full placing 'z' from 1 for 7), vc2_eng_full,
-      overlay(vc2_spc_full placing '+' from 1 for 7), vc2_spc_full,
-      overlay(nvc_kor placing '하' from 1 for 2), nvc_kor,
-      overlay(nvc_eng placing 'z' from 1 for 2), nvc_eng,
-      overlay(nvc_spc placing '+' from 1 for 2), nvc_spc,
-      overlay(nvc_kor_full placing '하' from 1 for 7), nvc_kor_full,
-      overlay(nvc_eng_full placing 'z' from 1 for 7), nvc_eng_full,
-      overlay(nvc_spc_full placing '+' from 1 for 7), nvc_spc_full,
-      overlay(nvc2_kor placing '하' from 1 for 2), nvc2_kor,
-      overlay(nvc2_eng placing 'z' from 1 for 2), nvc2_eng,
-      overlay(nvc2_spc placing '+' from 1 for 2), nvc2_spc,
-      overlay(nvc2_kor_full placing '하' from 1 for 7), nvc2_kor_full,
-      overlay(nvc2_eng_full placing 'z' from 1 for 7), nvc2_eng_full,
-      overlay(nvc2_spc_full placing '+' from 1 for 7) nvc2_spc_full
+      overlay(c_kor placing ''하'' from 1 for 2), c_kor,
+      overlay(c_eng placing ''z'' from 1 for 2), c_eng,
+      overlay(c_spc placing ''+'' from 1 for 2), c_spc,
+      overlay(c_kor_full placing ''하'' from 1 for 7), c_kor_full,
+      overlay(c_eng_full placing ''z'' from 1 for 7), c_eng_full,
+      overlay(c_spc_full placing ''+'' from 1 for 7), c_spc_full,
+      overlay(nc_kor placing ''하'' from 1 for 2), nc_kor,
+      overlay(nc_eng placing ''z'' from 1 for 2), nc_eng,
+      overlay(nc_spc placing ''+'' from 1 for 2), nc_spc,
+      overlay(nc_kor_full placing ''하'' from 1 for 7), nc_kor_full,
+      overlay(nc_eng_full placing ''z'' from 1 for 7), nc_eng_full,
+      overlay(nc_spc_full placing ''+'' from 1 for 7), nc_spc_full,
+      overlay(vc_kor placing ''하'' from 1 for 2), vc_kor,
+      overlay(vc_eng placing ''z'' from 1 for 2), vc_eng,
+      overlay(vc_spc placing ''+'' from 1 for 2), vc_spc,
+      overlay(vc_kor_full placing ''하'' from 1 for 7), vc_kor_full,
+      overlay(vc_eng_full placing ''z'' from 1 for 7), vc_eng_full,
+      overlay(vc_spc_full placing ''+'' from 1 for 7), vc_spc_full,
+      overlay(vc2_kor placing ''하'' from 1 for 2), vc2_kor,
+      overlay(vc2_eng placing ''z'' from 1 for 2), vc2_eng,
+      overlay(vc2_spc placing ''+'' from 1 for 2), vc2_spc,
+      overlay(vc2_kor_full placing ''하'' from 1 for 7), vc2_kor_full,
+      overlay(vc2_eng_full placing ''z'' from 1 for 7), vc2_eng_full,
+      overlay(vc2_spc_full placing ''+'' from 1 for 7), vc2_spc_full,
+      overlay(nvc_kor placing ''하'' from 1 for 2), nvc_kor,
+      overlay(nvc_eng placing ''z'' from 1 for 2), nvc_eng,
+      overlay(nvc_spc placing ''+'' from 1 for 2), nvc_spc,
+      overlay(nvc_kor_full placing ''하'' from 1 for 7), nvc_kor_full,
+      overlay(nvc_eng_full placing ''z'' from 1 for 7), nvc_eng_full,
+      overlay(nvc_spc_full placing ''+'' from 1 for 7), nvc_spc_full,
+      overlay(nvc2_kor placing ''하'' from 1 for 2), nvc2_kor,
+      overlay(nvc2_eng placing ''z'' from 1 for 2), nvc2_eng,
+      overlay(nvc2_spc placing ''+'' from 1 for 2), nvc2_spc,
+      overlay(nvc2_kor_full placing ''하'' from 1 for 7), nvc2_kor_full,
+      overlay(nvc2_eng_full placing ''z'' from 1 for 7), nvc2_eng_full,
+      overlay(nvc2_spc_full placing ''+'' from 1 for 7) nvc2_spc_full
     FROM string_test_table',
     $$VALUES (
       '하'::TEXT,
-      '가'::TEXT,
+      '가'::CHAR(100),
       'z'::TEXT,
-      'a'::TEXT,
+      'a'::CHAR(100),
       '+'::TEXT,
-      '!'::TEXT,
+      '!'::CHAR(100),
       '하아자차카타파하'::TEXT,
-      '가나다라마바사아자차카타파하'::TEXT,
+      '가나다라마바사아자차카타파하'::CHAR(2000),
       'zhijklmnopqrstuvwxyz'::TEXT,
-      'abcdefghijklmnopqrstuvwxyz'::TEXT,
+      'abcdefghijklmnopqrstuvwxyz'::CHAR(2000),
       '+*()<>/\\'''::TEXT,
-      '!@#$%^&*()<>/\\'''::TEXT,
+      '!@#$%^&*()<>/\\'''::CHAR(2000),
       '하'::TEXT,
-      '가'::TEXT,
+      '가'::NCHAR(100),
       'z'::TEXT,
-      'a'::TEXT,
+      'a'::NCHAR(100),
       '+'::TEXT,
-      '!'::TEXT,
+      '!'::NCHAR(100),
       '하아자차카타파하'::TEXT,
-      '가나다라마바사아자차카타파하'::TEXT,
+      '가나다라마바사아자차카타파하'::NCHAR(2000),
       'zhijklmnopqrstuvwxyz'::TEXT,
-      'abcdefghijklmnopqrstuvwxyz'::TEXT,
+      'abcdefghijklmnopqrstuvwxyz'::NCHAR(2000),
       '+*()<>/\\'''::TEXT,
-      '!@#$%^&*()<>/\\'''::TEXT,
+      '!@#$%^&*()<>/\\'''::NCHAR(2000),
       '하'::TEXT,
-      '가'::TEXT,
+      '가'::VARCHAR,
       'z'::TEXT,
-      'a'::TEXT,
+      'a'::VARCHAR,
       '+'::TEXT,
-      '!'::TEXT,
+      '!'::VARCHAR,
       '하아자차카타파하'::TEXT,
-      '가나다라마바사아자차카타파하'::TEXT,
+      '가나다라마바사아자차카타파하'::VARCHAR,
       'zhijklmnopqrstuvwxyz'::TEXT,
-      'abcdefghijklmnopqrstuvwxyz'::TEXT,
+      'abcdefghijklmnopqrstuvwxyz'::VARCHAR,
       '+*()<>/\\'''::TEXT,
-      '!@#$%^&*()<>/\\'''::TEXT,
+      '!@#$%^&*()<>/\\'''::VARCHAR,
       '하'::TEXT,
-      '가'::TEXT,
+      '가'::VARCHAR,
       'z'::TEXT,
-      'a'::TEXT,
+      'a'::VARCHAR,
       '+'::TEXT,
-      '!'::TEXT,
+      '!'::VARCHAR,
       '하아자차카타파하'::TEXT,
-      '가나다라마바사아자차카타파하'::TEXT,
+      '가나다라마바사아자차카타파하'::VARCHAR,
       'zhijklmnopqrstuvwxyz'::TEXT,
-      'abcdefghijklmnopqrstuvwxyz'::TEXT,
+      'abcdefghijklmnopqrstuvwxyz'::VARCHAR,
       '+*()<>/\\'''::TEXT,
-      '!@#$%^&*()<>/\\'''::TEXT,
+      '!@#$%^&*()<>/\\'''::VARCHAR,
       '하'::TEXT,
       '가'::TEXT,
       'z'::TEXT,
@@ -495,44 +501,45 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 7: position() 함수
   SELECT results_eq('
     SELECT
-      position('가' in c_kor),
-      position('a' in c_eng),
-      position('!' in c_spc),
-      position('사아' in c_kor_full),
-      position('mn' in c_eng_full),
-      position('()' in c_spc_full),
-      position('가' in nc_kor),
-      position('a' in nc_eng),
-      position('!' in nc_spc),
-      position('사아' in nc_kor_full),
-      position('mn' in nc_eng_full),
-      position('()' in nc_spc_full),
-      position('가' in vc_kor),
-      position('a' in vc_eng),
-      position('!' in vc_spc),
-      position('사아' in vc_kor_full),
-      position('mn' in vc_eng_full),
-      position('()' in vc_spc_full),
-      position('가' in vc2_kor),
-      position('a' in vc2_eng),
-      position('!' in vc2_spc),
-      position('사아' in vc2_kor_full),
-      position('mn' in vc2_eng_full),
-      position('()' in vc2_spc_full),
-      position('가' in nvc_kor),
-      position('a' in nvc_eng),
-      position('!' in nvc_spc),
-      position('사아' in nvc_kor_full),
-      position('mn' in nvc_eng_full),
-      position('()' in nvc_spc_full),
-      position('가' in nvc2_kor),
-      position('a' in nvc2_eng),
-      position('!' in nvc2_spc),
-      position('사아' in nvc2_kor_full),
-      position('mn' in nvc2_eng_full),
-      position('()' in nvc2_spc_full)
+      position(''가'' in c_kor),
+      position(''a'' in c_eng),
+      position(''!'' in c_spc),
+      position(''사아'' in c_kor_full),
+      position(''mn'' in c_eng_full),
+      position(''()'' in c_spc_full),
+      position(''가'' in nc_kor),
+      position(''a'' in nc_eng),
+      position(''!'' in nc_spc),
+      position(''사아'' in nc_kor_full),
+      position(''mn'' in nc_eng_full),
+      position(''()'' in nc_spc_full),
+      position(''가'' in vc_kor),
+      position(''a'' in vc_eng),
+      position(''!'' in vc_spc),
+      position(''사아'' in vc_kor_full),
+      position(''mn'' in vc_eng_full),
+      position(''()'' in vc_spc_full),
+      position(''가'' in vc2_kor),
+      position(''a'' in vc2_eng),
+      position(''!'' in vc2_spc),
+      position(''사아'' in vc2_kor_full),
+      position(''mn'' in vc2_eng_full),
+      position(''()'' in vc2_spc_full),
+      position(''가'' in nvc_kor),
+      position(''a'' in nvc_eng),
+      position(''!'' in nvc_spc),
+      position(''사아'' in nvc_kor_full),
+      position(''mn'' in nvc_eng_full),
+      position(''()'' in nvc_spc_full),
+      position(''가'' in nvc2_kor),
+      position(''a'' in nvc2_eng),
+      position(''!'' in nvc2_spc),
+      position(''사아'' in nvc2_kor_full),
+      position(''mn'' in nvc2_eng_full),
+      position(''()'' in nvc2_spc_full)
     FROM string_test_table',
     $$VALUES (
       1::INTEGER,
@@ -574,6 +581,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 8: substring() 함수
   SELECT results_eq('
     SELECT
       substring(c_kor from 0 for 1),
@@ -653,44 +661,45 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 9: trim() 함수
   SELECT results_eq('
     SELECT
-      trim(both '가' from c_kor),
-      trim(both 'a' from c_eng),
-      trim(both '!' from c_spc),
-      trim(both '가파다라하' from c_kor_full),
-      trim(both 'azbycx' from c_eng_full),
-      trim(both '!\@#/' from c_spc_full),
-      trim(both '가' from nc_kor),
-      trim(both 'a' from nc_eng),
-      trim(both '!' from nc_spc),
-      trim(both '가파다라하' from nc_kor_full),
-      trim(both 'azbycx' from nc_eng_full),
-      trim(both '!\@#/' from nc_spc_full),
-      trim(both '가' from vc_kor),
-      trim(both 'a' from vc_eng),
-      trim(both '!' from vc_spc),
-      trim(both '가파다라하' from vc_kor_full),
-      trim(both 'azbycx' from vc_eng_full),
-      trim(both '!\@#/' from vc_spc_full),
-      trim(both '가' from vc2_kor),
-      trim(both 'a' from vc2_eng),
-      trim(both '!' from vc2_spc),
-      trim(both '가파다라하' from vc2_kor_full),
-      trim(both 'azbycx' from vc2_eng_full),
-      trim(both '!\@#/' from vc2_spc_full),
-      trim(both '가' from nvc_kor),
-      trim(both 'a' from nvc_eng),
-      trim(both '!' from nvc_spc),
-      trim(both '가파다라하' from nvc_kor_full),
-      trim(both 'azbycx' from nvc_eng_full),
-      trim(both '!\@#/' from nvc_spc_full),
-      trim(both '가' from nvc2_kor),
-      trim(both 'a' from nvc2_eng),
-      trim(both '!' from nvc2_spc),
-      trim(both '가파다라하' from nvc2_kor_full),
-      trim(both 'azbycx' from nvc2_eng_full),
-      trim(both '!\@#/' from nvc2_spc_full)
+      trim(both ''가'' from c_kor),
+      trim(both ''a'' from c_eng),
+      trim(both ''!'' from c_spc),
+      trim(both ''가파다라하'' from c_kor_full),
+      trim(both ''azbycx'' from c_eng_full),
+      trim(both ''!\@#/'' from c_spc_full),
+      trim(both ''가'' from nc_kor),
+      trim(both ''a'' from nc_eng),
+      trim(both ''!'' from nc_spc),
+      trim(both ''가파다라하'' from nc_kor_full),
+      trim(both ''azbycx'' from nc_eng_full),
+      trim(both ''!\@#/'' from nc_spc_full),
+      trim(both ''가'' from vc_kor),
+      trim(both ''a'' from vc_eng),
+      trim(both ''!'' from vc_spc),
+      trim(both ''가파다라하'' from vc_kor_full),
+      trim(both ''azbycx'' from vc_eng_full),
+      trim(both ''!\@#/'' from vc_spc_full),
+      trim(both ''가'' from vc2_kor),
+      trim(both ''a'' from vc2_eng),
+      trim(both ''!'' from vc2_spc),
+      trim(both ''가파다라하'' from vc2_kor_full),
+      trim(both ''azbycx'' from vc2_eng_full),
+      trim(both ''!\@#/'' from vc2_spc_full),
+      trim(both ''가'' from nvc_kor),
+      trim(both ''a'' from nvc_eng),
+      trim(both ''!'' from nvc_spc),
+      trim(both ''가파다라하'' from nvc_kor_full),
+      trim(both ''azbycx'' from nvc_eng_full),
+      trim(both ''!\@#/'' from nvc_spc_full),
+      trim(both ''가'' from nvc2_kor),
+      trim(both ''a'' from nvc2_eng),
+      trim(both ''!'' from nvc2_spc),
+      trim(both ''가파다라하'' from nvc2_kor_full),
+      trim(both ''azbycx'' from nvc2_eng_full),
+      trim(both ''!\@#/'' from nvc2_spc_full)
     FROM string_test_table',
     $$VALUES (
       ''::TEXT,
@@ -732,6 +741,7 @@ FROM string_test_table',
     $$
   );
 
+  -- TEST 10: upper() 함수
   SELECT results_eq('
     SELECT
       upper(c_kor),
