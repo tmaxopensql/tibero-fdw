@@ -2,7 +2,7 @@
 BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
 
-  SELECT plan(28);
+  SELECT plan(29);
 
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
@@ -182,6 +182,12 @@ BEGIN;
     'SELECT * FROM d_ft2'
   );
 
+  -- TEST 21
+  SELECT is(
+    (SELECT COUNT(*) FROM d_ft2 WHERE iytm = INTERVAL '178000000-11' YEAR TO MONTH ),
+    10::BIGINT
+  );
+
   -- Tibero DATE <-> Postgres TIMESTAMP 호환 검증
   CREATE FOREIGN TABLE d_ft3 (
       dt TIMESTAMP,
@@ -205,7 +211,7 @@ BEGIN;
       tslz_ad TIMESTAMP
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
 
-  -- TEST 21:
+  -- TEST 22:
   SELECT lives_ok(
     'SELECT * FROM d_ft3'
   );
@@ -233,7 +239,7 @@ BEGIN;
       tslz_ad CHAR(30)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');  
 
-  -- TEST 22:
+  -- TEST 23:
   SELECT lives_ok(
     'SELECT * FROM d_ft4'
   );
@@ -261,7 +267,7 @@ BEGIN;
       tslz_ad VARCHAR(30)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
 
-  -- TEST 23:
+  -- TEST 24:
   SELECT lives_ok(
     'SELECT * FROM d_ft5'
   );
@@ -289,7 +295,7 @@ BEGIN;
       tslz_ad TEXT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
 
-  -- TEST 24:
+  -- TEST 25:
   SELECT lives_ok(
     'SELECT * FROM d_ft6'
   );
@@ -317,7 +323,7 @@ BEGIN;
       tslz_ad DATE
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
 
-  -- TEST 25:
+  -- TEST 26:
   SELECT lives_ok(
     'SELECT * FROM d_ft7'
   );
@@ -332,7 +338,7 @@ BEGIN;
     idts    CHAR(50)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
 
-  -- TEST 26:
+  -- TEST 27:
   SELECT lives_ok(
     'SELECT * FROM d_ft8'
   );
@@ -343,7 +349,7 @@ BEGIN;
     idts    VARCHAR(50)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
 
-  -- TEST 27:
+  -- TEST 28:
   SELECT lives_ok(
     'SELECT * FROM d_ft9'
   );
@@ -354,7 +360,7 @@ BEGIN;
     idts    TEXT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
 
-  -- TEST 28:
+  -- TEST 29:
   SELECT lives_ok(
     'SELECT * FROM d_ft10'
   );
