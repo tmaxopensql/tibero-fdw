@@ -13,7 +13,7 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
   
-  CREATE FOREIGN TABLE jft1(
+  CREATE FOREIGN TABLE jft1 (
       c_kor CHAR(100),
       c_eng CHAR(100),
       c_spc CHAR(100),
@@ -39,7 +39,7 @@ BEGIN;
       idts INTERVAL DAY TO SECOND
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
 
-  CREATE FOREIGN TABLE jft2(
+  CREATE FOREIGN TABLE jft2 (
       c_kor CHAR(100),
       c_eng CHAR(100),
       c_spc CHAR(100),
@@ -65,7 +65,7 @@ BEGIN;
       idts INTERVAL DAY TO SECOND
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
 
-  CREATE FOREIGN TABLE jft3(
+  CREATE FOREIGN TABLE jft3 (
       c_kor CHAR(100),
       c_eng CHAR(100),
       c_spc CHAR(100),
@@ -82,7 +82,7 @@ BEGIN;
       nvc_eng TEXT,
       nvc_spc TEXT,
       rwid TEXT,
-      nm NUMERIC(190, 100),
+      nm NUMERIC,
       flt FLOAT,
       dt DATE,
       ts TIMESTAMP,
