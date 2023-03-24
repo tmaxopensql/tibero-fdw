@@ -1,0 +1,32 @@
+name: update-release-in-dist
+
+on:
+  workflow_call:
+    secrets:
+      git-access-token:
+        description: 'Access token for Github'
+        required: true
+
+jobs:
+  update-release-in-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the latest release from source code repository
+        id: get_the_latest_release
+        uses: pozetroninc/github-action-get-latest-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.git-access-token }}
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.git-access-token }}
+      
+      - name: Create release in dist repository
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.git-access-token }}
+        with:
+          repo: tmaxopensql/tibero-fdw-dist
+          tag_name: ${{ steps.get_the_latest_release.outputs.release }}
+          release_name: ${{ steps.get_the_latest_release.outputs.release }}
+          body: ${{ steps.get_the_latest_release.outputs.description }}
+          
