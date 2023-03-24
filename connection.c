@@ -25,23 +25,58 @@
 #include "tibero_fdw.h"
 #include "connection.h"
 
+/* {{{ Tibero datatype length *************************************************/
+#define NUMBER_MAX_STRING 256
+#define TB_CHAR_SIZE_MAX 2000
+#define TB_VARCHAR2_SIZE_MAX (UINT16_MAX - 3)
+#define TB_RAW_SIZE_MAX 2000
+#define NLS_DATETIME_FORMAT_SIZE 80
+#define TB_TIME_MAX_STR_SIZE 32
+#define TB_ITV_YTM_MAX_STR_SIZE 15 /* "+999999999-11" */
+#define TB_ITV_DTS_MAX_STR_SIZE 31 /* "+999999999 11:59:59.999999999" */
+#define EROWID_SGMT_LEN 6
+#define EROWID_FILE_LEN 3
+#define EROWID_BLOCK_LEN 6
+#define EROWID_ROW_LEN 3
+#define EROWID_SIZE (EROWID_SGMT_LEN + EROWID_FILE_LEN + EROWID_BLOCK_LEN + EROWID_ROW_LEN)
+/************************************************* Tibero datatype length }}} */
+
 /* {{{ Global variables *******************************************************/
 static HTAB *ConnectionHash = NULL;
 static bool xact_got_connection = false;
 /******************************************************* Global variables }}} */
 
-void TbFdwReportError(int elevel, int sql_errcode, SQLRETURN rc,
-											ConnCacheEntry *conn);
-
-static void MakeTbConnection(ConnCacheEntry *conn, UserMapping *user);
+#define TbFdwReportError(elevel, sql_errcode, msg, conn)											 \
+do {																																					 \
+	PG_TRY();																																		 \
+	{																																						 \
+		if (conn->connected) {																										 \
+			conn->begin_remote_xact = false;																				 \
+			conn->connected = false;																								 \
+			/* Don't invoke tbcli wrapper function */																 \
+			SQLDisconnect(conn->hdbc);																							 \
+			SQLFreeHandle(SQL_HANDLE_DBC, conn->hdbc);															 \
+			SQLFreeHandle(SQL_HANDLE_ENV, conn->henv);															 \
+		}																																					 \
+		ereport(elevel, errcode(sql_errcode), errmsg(msg, ""));										 \
+	}																																						 \
+	PG_FINALLY();																																 \
+	{																																						 \
+	}																																						 \
+	PG_END_TRY();																																 \
+} while (0)
 
 static void TbfdwXactCallback(XactEvent event, void *arg);
 static void TbfdwSubxactCallback(SubXactEvent event, SubTransactionId mySubid,
 																 SubTransactionId parentSubid, void *arg);
 static void TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue);
 
+static void make_tb_connection(ConnCacheEntry *conn, UserMapping *user);
+SQLUINTEGER get_tb_type_max_str_size(int type, SQLUINTEGER col_size,
+																		 ConnCacheEntry *conn);
+
 static void
-BeginRemoteXact(TbStatement *tbStmt, bool isSerializable)
+begin_remote_xact(TbStatement *tbStmt, bool isSerializable)
 {
 	TbSQLSetConnectAttr(tbStmt->conn, SQL_ATTR_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF, 0);
 
@@ -55,7 +90,7 @@ BeginRemoteXact(TbStatement *tbStmt, bool isSerializable)
 }
 
 static void
-ConnectTbServer(ConnCacheEntry *conn, const char *host, const char *port,
+connect_tb_server(ConnCacheEntry *conn, const char *host, const char *port,
 								const char *dbname, const char *username, const char *password)
 {
 	char conn_str[512] = {0,};
@@ -77,7 +112,7 @@ ConnectTbServer(ConnCacheEntry *conn, const char *host, const char *port,
 }
 
 static void
-DisconnectTbServer(ConnCacheEntry *conn)
+disconnect_tb_server(ConnCacheEntry *conn)
 {
 	if (conn->connected == true) {
 		TbSQLDisconnect(conn);
@@ -90,14 +125,14 @@ DisconnectTbServer(ConnCacheEntry *conn)
 }
 
 static bool
-NeedRemoteSnapshot(ConnCacheEntry *conn)
+need_remote_snapshot(ConnCacheEntry *conn)
 {
 	return !IsolationUsesXactSnapshot() &&
 				 (conn->stmt_ts != GetCurrentStatementStartTimestamp());
 }
 
 void
-GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
+get_tb_statement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 {
 	bool found = false;
 	bool retry = false;
@@ -129,17 +164,17 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 	PG_TRY();
 	{
 		if (conn->connected && conn->invalidated)
-			DisconnectTbServer(conn);
+			disconnect_tb_server(conn);
 
 		if (conn->connected == false)
-			MakeTbConnection(conn, user);
+			make_tb_connection(conn, user);
 
 		TbSQLAllocHandle(conn, SQL_HANDLE_STMT, conn->hdbc, &tbStmt->hstmt);
 
 		if (conn->begin_remote_xact == false)
-			BeginRemoteXact(tbStmt, IsolationUsesXactSnapshot());
+			begin_remote_xact(tbStmt, IsolationUsesXactSnapshot());
 
-		if (use_fb_query && NeedRemoteSnapshot(conn)) {
+		if (use_fb_query && need_remote_snapshot(conn)) {
 			SQLUINTEGER len;
 			TbSQLExecDirect(tbStmt, (SQLCHAR *)"SELECT current_tsn FROM v$database",
 											SQL_NTS);
@@ -150,7 +185,7 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 			conn->stmt_ts = GetCurrentStatementStartTimestamp();
 		}
 
-		memcpy (tbStmt->tsn, conn->tsn, sizeof(tbStmt->tsn));
+		memcpy(tbStmt->tsn, conn->tsn, sizeof(tbStmt->tsn));
 	}
 	PG_CATCH();
 	{
@@ -171,15 +206,15 @@ GetTbStatement(UserMapping *user, TbStatement *tbStmt, bool use_fb_query)
 	PG_END_TRY();
 
 	if (retry) {
-		DisconnectTbServer(conn);
-		MakeTbConnection(conn, user);
+		disconnect_tb_server(conn);
+		make_tb_connection(conn, user);
 		TbSQLAllocHandle(conn, SQL_HANDLE_STMT, conn->hdbc, &tbStmt->hstmt);
-		BeginRemoteXact(tbStmt, IsolationUsesXactSnapshot());
+		begin_remote_xact(tbStmt, IsolationUsesXactSnapshot());
 	}
 }
 
 static void
-MakeTbConnection(ConnCacheEntry *conn, UserMapping *user)
+make_tb_connection(ConnCacheEntry *conn, UserMapping *user)
 {
 	ForeignServer *server = GetForeignServer(user->serverid);
 	ListCell	 *lc;
@@ -223,7 +258,7 @@ MakeTbConnection(ConnCacheEntry *conn, UserMapping *user)
 		}
 	}
 
-	ConnectTbServer(conn, host, port, dbname, username, password);
+	connect_tb_server(conn, host, port, dbname, username, password);
 }
 
 static void
@@ -246,7 +281,7 @@ TbfdwXactCallback(XactEvent event, void *arg)
 					if (conn->connected) {
 						TbSQLEndTran(conn, SQL_COMMIT);
 						if (conn->invalidated || !conn->keep_connections) {
-							DisconnectTbServer(conn);
+							disconnect_tb_server(conn);
 						}
 					} break;
 				case XACT_EVENT_PRE_PREPARE:
@@ -264,7 +299,7 @@ TbfdwXactCallback(XactEvent event, void *arg)
 					if (conn->connected) {
 						TbSQLEndTran(conn, SQL_ROLLBACK);
 						if (conn->invalidated || !conn->keep_connections) {
-							DisconnectTbServer(conn);
+							disconnect_tb_server(conn);
 						}
 					} break;
 			}
@@ -316,29 +351,6 @@ TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue)
 }
 
 void
-TbFdwReportError(int elevel, int sql_errcode, SQLRETURN rc, ConnCacheEntry *conn)
-{
-	PG_TRY();
-	{
-		/* NOTE Do not call tbcli wrapper function */
-		if (conn->connected) {
-			conn->begin_remote_xact = false;
-			conn->connected = false;
-			SQLDisconnect(conn->hdbc);
-			SQLFreeHandle(SQL_HANDLE_DBC, conn->hdbc);
-			SQLFreeHandle(SQL_HANDLE_ENV, conn->henv);
-		}
-
-		/* TODO Set the specific sql_errcode from the rc using diagnosis */
-		ereport(elevel, errcode(sql_errcode), errmsg("tbcli error (%d)", rc));
-	}
-	PG_FINALLY();
-	{
-	}
-	PG_END_TRY();
-}
-
-void
 TbSQLFetch(TbStatement *tbStmt, int *cur_tuple_idx, bool *end_of_fetch)
 {
 	SQLRETURN rc = SQLFetch(tbStmt->hstmt);
@@ -347,7 +359,8 @@ TbSQLFetch(TbStatement *tbStmt, int *cur_tuple_idx, bool *end_of_fetch)
 	} else if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 
 	if (cur_tuple_idx != NULL) *cur_tuple_idx = 0;
@@ -365,7 +378,8 @@ TbSQLBindCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLSMALLINT target_type,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -376,7 +390,8 @@ TbSQLEndTran(ConnCacheEntry *conn, SQLSMALLINT completion_type)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 	conn->begin_remote_xact = false;
 }
@@ -389,7 +404,8 @@ TbSQLSetStmtAttr(TbStatement *tbStmt, SQLINTEGER attribute, SQLPOINTER value,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -400,7 +416,8 @@ TbSQLExecDirect(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -412,7 +429,8 @@ TbSQLAllocHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -423,7 +441,8 @@ TbSQLFreeStmt(TbStatement *tbStmt, SQLUSMALLINT option)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -434,7 +453,8 @@ TbSQLExecute(TbStatement *tbStmt)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -452,7 +472,8 @@ TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -467,8 +488,10 @@ TbSQLDescribeCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLCHAR *col_name,
 																decimal_digits, nullable);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
+		*col_size = get_tb_type_max_str_size(*data_type, *col_size, tbStmt->conn);
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -479,7 +502,8 @@ TbSQLPrepare(TbStatement *tbStmt, SQLCHAR *sql, SQLINTEGER sql_len)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
 }
 
@@ -494,7 +518,8 @@ TbSQLDriverConnect(ConnCacheEntry *conn, SQLHWND window_handle, SQLCHAR *in_conn
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -505,7 +530,8 @@ TbSQLDisconnect(ConnCacheEntry *conn)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -516,7 +542,8 @@ TbSQLFreeHandle(ConnCacheEntry *conn, SQLSMALLINT handle_type, SQLHANDLE handle)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -528,7 +555,8 @@ TbSQLSetConnectAttr(ConnCacheEntry *conn, SQLINTEGER attribute,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -540,7 +568,8 @@ TbSQLSetEnvAttr(ConnCacheEntry *conn, SQLINTEGER attribute, SQLPOINTER value,
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), conn);
 	}
 }
 
@@ -551,6 +580,86 @@ TbSQLNumResultCols(TbStatement *tbStmt, SQLSMALLINT *col_cnt)
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
 	} else {
-		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR, rc, tbStmt->conn);
+		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+										 psprintf("return code (%d)", rc), tbStmt->conn);
 	}
+}
+
+SQLUINTEGER
+get_tb_type_max_str_size(int type, SQLUINTEGER col_size, ConnCacheEntry *conn)
+{
+	SQLUINTEGER res = 0;
+
+	switch (type) {
+		case SQL_NUMERIC: /* TB_TYPE_NUMBER */
+		case SQL_DECIMAL:
+		case SQL_FLOAT:
+		case SQL_REAL:
+		case SQL_DOUBLE:
+		case SQL_INTEGER:
+		case SQL_SMALLINT:
+		case SQL_BIGINT:
+		case SQL_TINYINT:
+		case SQL_BIT:
+		case SQL_BOOLEAN:
+		case SQL_BFLOAT: /* TB_TYPE_BIN_FLOAT */
+    case SQL_BDOUBLE: /* TB_TYPE_BIN_DOUBLE */
+			res = NUMBER_MAX_STRING;
+			break;
+
+		case SQL_CHAR: /* TB_TYPE_CHAR */
+		case SQL_WCHAR: /* TB_TYPE_NCHAR */
+			res = col_size > 0 ? col_size : TB_CHAR_SIZE_MAX;
+			break;
+
+		case SQL_VARCHAR: /* TB_TYPE_VARCHAR */
+		case SQL_WVARCHAR: /* TB_TYPE_NVARCHAR */
+			res = col_size > 0 ? col_size : TB_VARCHAR2_SIZE_MAX;
+			break;
+
+		case SQL_VARBINARY: /* TB_TYPE_RAW */
+			res = (col_size > 0 ? col_size : TB_RAW_SIZE_MAX) * 2;
+			break;
+
+		case SQL_TYPE_DATE:
+		case SQL_DATE: /* TB_TYPE_DATE */
+			res = NLS_DATETIME_FORMAT_SIZE;
+			break;
+
+		case SQL_TYPE_TIME:
+		case SQL_TIME: /* TB_TYPE_TIME */
+			res = TB_TIME_MAX_STR_SIZE;
+			break;
+
+		case SQL_TYPE_TIMESTAMP:
+		case SQL_TIMESTAMP: /* TB_TYPE_TIMESTAMP,
+													 TB_TYPE_TS_TZ,
+													 TB_TYPE_TS_LTZ */
+			res = NLS_DATETIME_FORMAT_SIZE;
+			break;
+
+		case SQL_INTERVAL_YEAR_TO_MONTH: /* TB_TYPE_ITV_YTM */
+			res = TB_ITV_YTM_MAX_STR_SIZE;
+			break;
+
+		case SQL_INTERVAL_DAY_TO_SECOND: /* TB_TYPE_ITV_DTS */
+			res = TB_ITV_DTS_MAX_STR_SIZE;
+			break;
+
+		case SQL_BINARY: /* TB_TYPE_ROWID */
+			res = EROWID_SIZE;
+			break;
+
+		case SQL_CSR: /* TB_TYPE_CSR */
+			res = NUMBER_MAX_STRING;
+			break;
+
+		default:
+			TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
+											 psprintf("tbcli datatype error (%d)", type), conn);
+			break;
+	}
+
+	/* + 1 for null termination */
+	return res + 1;
 }

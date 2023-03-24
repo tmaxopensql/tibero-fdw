@@ -447,7 +447,7 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	}
 
 	fsstate->tbStmt = (TbStatement *) palloc0(sizeof(TbStatement));
-	GetTbStatement(user, fsstate->tbStmt, fsstate->use_fb_query);
+	get_tb_statement(user, fsstate->tbStmt, fsstate->use_fb_query);
 
 	TbSQLPrepare(fsstate->tbStmt, (SQLCHAR *)fsstate->query, SQL_NTS);
 	TbSQLNumResultCols(fsstate->tbStmt, &fsstate->tbStmt->res_col_cnt);
@@ -457,7 +457,7 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 		TbSQLDescribeCol(fsstate->tbStmt, (SQLSMALLINT)i + 1, col->col_name,
 										 sizeof(col->col_name), &col->col_name_len, &col->data_type,
 										 &col->col_size, &col->scale, &col->nullable);
-		col->col_size++;
+
 		col->data = palloc0(sizeof(unsigned char) * col->col_size * fsstate->fetch_size);
 		col->ind = palloc0(sizeof(SQLLEN) * fsstate->fetch_size);
 	}
