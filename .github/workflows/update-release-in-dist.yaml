@@ -25,7 +25,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.git-access-token }}
         with:
-          repo: 'tmaxopensql/tibero-fdw-dist'
+          owner: 'tmaxopensql'
+          repo: 'tibero-fdw-dist'
           tag_name: ${{ steps.get_the_latest_release.outputs.release }}
           release_name: ${{ steps.get_the_latest_release.outputs.release }}
           body: ${{ steps.get_the_latest_release.outputs.description }}
