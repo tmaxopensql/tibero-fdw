@@ -52,7 +52,7 @@ BEGIN;
       nvc2_spc_full TEXT
   ) SERVER server_name OPTIONS (owner_name 'tibero', table_name 't1');
 
-  -- TEST 1: 문자열 Concatenate (||) 함수
+  -- TEST 1
   SELECT results_eq('
     SELECT c_kor || c_eng || c_spc || c_kor_full || c_eng_full || c_spc_full || nc_kor || nc_eng ||
   nc_spc || nc_kor_full || nc_eng_full || nc_spc_full || vc_kor || vc_eng || vc_spc ||
@@ -63,10 +63,11 @@ BEGIN;
 FROM string_test_table',
     $$VALUES (
       '가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\'''::TEXT)
-    $$
+    $$,
+    '문자열 Concatenate (||) 함수 검증'
   );
 
-  -- TEST 2: bit_length() 함수
+  -- TEST 2
   SELECT results_eq('
     SELECT
       bit_length(c_kor),
@@ -143,10 +144,11 @@ FROM string_test_table',
       336::INTEGER,
       208::INTEGER,
       128::INTEGER)
-    $$
+    $$,
+    '문자열 bit_length() 함수 검증'
   );
 
-  -- TEST 3: char_length() 함수
+  -- TEST 3
   SELECT results_eq('
     SELECT
       char_length(c_kor),
@@ -223,10 +225,11 @@ FROM string_test_table',
       14::INTEGER,
       26::INTEGER,
       16::INTEGER)
-    $$
+    $$,
+    '문자열 char_length() 함수 검증'
   );
 
-  -- TEST 4: lower() 함수
+  -- TEST 4
   SELECT results_eq('
     SELECT
       lower(c_kor),
@@ -303,10 +306,11 @@ FROM string_test_table',
       '가나다라마바사아자차카타파하'::TEXT,
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT)
-    $$
+    $$,
+    '문자열 lower() 함수 검증'
   );
 
-  -- TEST 5: octet_length() 함수
+  -- TEST 5
   SELECT results_eq('
     SELECT
       octet_length(c_kor),
@@ -383,10 +387,11 @@ FROM string_test_table',
       42::INTEGER,
       26::INTEGER,
       16::INTEGER)
-    $$
+    $$,
+    '문자열 octet_length() 함수 검증'
   );
 
-  -- TEST 6: overlay() 함수
+  -- TEST 6
   SELECT results_eq('
     SELECT
       overlay(c_kor placing ''하'' from 1 for 2), c_kor,
@@ -498,10 +503,11 @@ FROM string_test_table',
       'zhijklmnopqrstuvwxyz'::TEXT,
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '+*()<>/\\'''::TEXT)
-    $$
+    $$,
+    '문자열 overlay() 함수 검증'
   );
 
-  -- TEST 7: position() 함수
+  -- TEST 7
   SELECT results_eq('
     SELECT
       position(''가'' in c_kor),
@@ -578,10 +584,11 @@ FROM string_test_table',
       7::INTEGER,
       13::INTEGER,
       9::INTEGER)
-    $$
+    $$,
+    '문자열 position() 함수 검증'
   );
 
-  -- TEST 8: substring() 함수
+  -- TEST 8
   SELECT results_eq('
     SELECT
       substring(c_kor from 0 for 1),
@@ -658,10 +665,11 @@ FROM string_test_table',
       '다라마바사아자'::TEXT,
       'cdefghi'::TEXT,
       '#$%^&*('::TEXT)
-    $$
+    $$,
+    '문자열 substring() 함수 검증'
   );
 
-  -- TEST 9: trim() 함수
+  -- TEST 9
   SELECT results_eq('
     SELECT
       trim(both ''가'' from c_kor),
@@ -738,10 +746,11 @@ FROM string_test_table',
       '나다라마바사아자차카타'::TEXT,
       'defghijklmnopqrstuvw'::TEXT,
       '$%^&*()<>/\\'''::TEXT)
-    $$
+    $$,
+    '문자열 trim() 함수 검증'
   );
 
-  -- TEST 10: upper() 함수
+  -- TEST 10
   SELECT results_eq('
     SELECT
       upper(c_kor),
@@ -818,7 +827,8 @@ FROM string_test_table',
       '가나다라마바사아자차카타파하'::TEXT,
       'ABCDEFGHIJKLMNOPQRSTUVWXYZ'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT)
-    $$
+    $$,
+    '문자열 upper() 함수 검증'
   );
 
   -- Finish the tests and clean up.

@@ -13,7 +13,6 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  -- TEST 1: CREATE FOREIGN TABLE on remote VIEW
   CREATE FOREIGN TABLE fvt1(
       col_char CHAR(10),
       col_varchar VARCHAR(20),
@@ -32,6 +31,7 @@ BEGIN;
       col_interval_ds INTERVAL
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'v_test');
 
+  -- TEST 1: 원격 DBMS에 생성된 VIEW Foreign Table로 조회
   SELECT lives_ok('SELECT * FROM fvt1');
 
   SELECT * FROM finish();

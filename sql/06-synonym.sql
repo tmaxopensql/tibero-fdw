@@ -13,7 +13,6 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  -- TEST 1: CREATE FOREIGN TABLE on remote synonym for a remote table
   CREATE FOREIGN TABLE syn_table(
       col_char CHAR(10),
       col_varchar VARCHAR(20),
@@ -32,6 +31,7 @@ BEGIN;
       col_interval_ds INTERVAL
   ) SERVER server_name OPTIONS ( owner_name :TIBERO_USER, table_name 'ex_syn');
 
+  -- TEST 1: 원격 DB의 SYNONYM Foreign Table로 조회
   SELECT lives_ok('SELECT * FROM syn_table');
 
   SELECT * FROM finish();

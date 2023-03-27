@@ -28,22 +28,28 @@ BEGIN;
       nc_spc_full NCHAR(2000)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
   
-  -- TEST 1: Korean characters
+  -- TEST 1
   SELECT is(
     (SELECT c_kor FROM ft8),
-    '가');
+    '가',
+    '한국어 문자열 SELECT 확인'
+  );
 
-  -- TEST 2: Multiple Korean characters
+  -- TEST 2
   SELECT is(
     (SELECT nc_kor_full FROM ft8),
-    '가나다라마바사아자차카타파하');
+    '가나다라마바사아자차카타파하',
+    '한국어 다중길이 문자열 SELECT 확인'
+  );
 
-  -- TEST 3: Special characters
+  -- TEST 3
   SELECT is(
     (SELECT nc_spc_full FROM ft8),
-    '!@#$%^&*()<>/\\''');
+    '!@#$%^&*()<>/\\''',
+    '특수문자 SELECT 확인'
+  );
   
-  -- TEST 4: Fetch all columns, check the result
+  -- TEST 4
   SELECT row_eq(
     $$SELECT * FROM ft8 LIMIT 1$$,
     ROW('가'::char, 'a'::char, '!'::char, 
@@ -53,9 +59,10 @@ BEGIN;
       '가'::char, 'a'::char, '!'::char,
       '가나다라마바사아자차카타파하'::char(2000),
       'abcdefghijklmnopqrstuvwxyz'::char(2000),
-      '!@#$%^&*()<>/\\'''::char(2000)));
+      '!@#$%^&*()<>/\\'''::char(2000)),
+    '모든 열 CHAR 타입으로 결과 SELECT 확인'
+  );
 
-  -- TEST 5 ~ 8: Define foreign table column with wrong character size length
   CREATE FOREIGN TABLE err_ft8 (
       c_kor CHAR,
       c_eng CHAR,
@@ -71,8 +78,7 @@ BEGIN;
       nc_spc_full NCHAR
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
-  -- TEST 5:
-  -- 22001: value too long for type character(1)
+  -- TEST 5
   SELECT throws_ok(
     'SELECT c_kor_full FROM err_ft8',
     '22001',
@@ -80,6 +86,7 @@ BEGIN;
     'CHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
+  -- TEST 6
   SELECT throws_ok(
     'SELECT nc_spc_full FROM err_ft8',
     '22001',
@@ -102,6 +109,7 @@ BEGIN;
       vc2_spc_full VARCHAR(65532)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 7
   SELECT row_eq(
     $$SELECT * FROM ft9 LIMIT 1$$,
     ROW('가'::VARCHAR, 'a'::VARCHAR, '!'::VARCHAR,
@@ -111,7 +119,9 @@ BEGIN;
       '가'::VARCHAR, 'a'::VARCHAR, '!'::VARCHAR,
       '가나다라마바사아자차카타파하'::VARCHAR,
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR,
-      '!@#$%^&*()<>/\\'''::VARCHAR));
+      '!@#$%^&*()<>/\\'''::VARCHAR),
+    '모든 열 VARCHAR 타입으로 결과 SELECT 확인'
+  );
 
   CREATE FOREIGN TABLE err_ft9 (
       vc_kor VARCHAR(1),
@@ -128,6 +138,7 @@ BEGIN;
       vc2_spc_full VARCHAR(1)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 8
   SELECT throws_ok(
     'SELECT vc_kor_full FROM err_ft9',
     '22001',
@@ -135,6 +146,7 @@ BEGIN;
     'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
+  -- TEST 9
   SELECT throws_ok(
     'SELECT vc_eng_full FROM err_ft9',
     '22001',
@@ -142,6 +154,7 @@ BEGIN;
     'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
+  -- TEST 10
   SELECT throws_ok(
     'SELECT vc_spc_full FROM err_ft9',
     '22001',
@@ -149,7 +162,6 @@ BEGIN;
     'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
-  -- TEST 11:
   CREATE FOREIGN TABLE ft10 (
       nvc_kor TEXT,
       nvc_eng TEXT,
@@ -165,6 +177,7 @@ BEGIN;
       nvc2_spc_full TEXT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 11
   SELECT row_eq(
     $$SELECT * FROM ft10 LIMIT 1$$,
     ROW('가'::TEXT, 'a'::TEXT, '!'::TEXT,
@@ -178,7 +191,6 @@ BEGIN;
     'TEXT 타입 컬럼 결과값 가져오는 것 검증'
   );
 
-  -- TEST 12:
   CREATE FOREIGN TABLE char_err_ft10 (
       nvc_kor CHAR(1),
       nvc_eng CHAR(1),
@@ -194,10 +206,12 @@ BEGIN;
       nvc2_spc_full CHAR(1)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 12
   SELECT throws_ok(
     'SELECT * FROM char_err_ft10',
     '22001',
-    'value too long for type character(1)'
+    'value too long for type character(1)',
+    'CHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
   CREATE FOREIGN TABLE varchar_err_ft10 (
@@ -215,17 +229,19 @@ BEGIN;
       nvc2_spc_full VARCHAR(1)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 13
   SELECT throws_ok(
     'SELECT * FROM varchar_err_ft10',
     '22001',
-    'value too long for type character varying(1)'
+    'value too long for type character varying(1)',
+    'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
   );
 
-  -- TEST 14:
   CREATE FOREIGN TABLE ft11 (
       rwid TEXT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
 
+  -- TEST 14
   SELECT is(
     (SELECT * FROM ft11),
     'AAAArFAAAAAACTFAAA',

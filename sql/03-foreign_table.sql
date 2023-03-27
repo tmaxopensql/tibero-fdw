@@ -13,7 +13,7 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  -- TEST 1: CREATE FOREIGN TABLE without table_name - throws error
+  -- TEST 1: table_name 옵션 없이 CREATE FOREIGN TABLE 실행 - 에러 발생 확인
   CREATE FOREIGN TABLE ft1 (
       c0 int,
       c1 int NOT NULL,
@@ -27,7 +27,7 @@ BEGIN;
 
   SELECT throws_ok('SELECT * FROM ft1');
 
-  -- TEST 2: CREATE FOREIGN TABLE with non-existent owner_name - throws error
+  -- TEST 2: 존재하지 않는 owner_name 옵션으로 CREATE FOREIGN TABLE 실행 - 에러 발생 확인
   CREATE FOREIGN TABLE ft2 (
       c0 int,
       c1 int NOT NULL,
@@ -41,7 +41,7 @@ BEGIN;
 
   SELECT throws_ok('SELECT * FROM ft2');
 
-  -- TEST 3: CREATE FOREIGN TABLE without owner_name - throws error
+  -- TEST 3: owner_name 옵션 없이 CREATE FOREIGN TABLE 실행 - 에러 발생 확인
   CREATE FOREIGN TABLE ft3 (
       c0 int,
       c1 int NOT NULL,
@@ -55,7 +55,7 @@ BEGIN;
 
   SELECT throws_ok('SELECT * FROM ft_test');
 
-  -- TEST 4: CREATE FOREIGN TABLE with non-existent table name - throws error
+  -- TEST 4: 존재하지 않는 table_name 옵션으로 CREATE FOREIGN TABLE 실행 - 에러 발생 확인
   CREATE FOREIGN TABLE ft4 (
       c0 int,
       c1 int NOT NULL,
@@ -69,7 +69,6 @@ BEGIN;
 
   SELECT throws_ok('SELECT * FROM ft4');
 
-  -- TEST 5~7: CREATE FOREIGN TABLE with proper owner_name and table_name reference
   CREATE FOREIGN TABLE ft5 (
       c0 int,
       c1 int NOT NULL,
@@ -81,13 +80,13 @@ BEGIN;
       c7 char(10) default 'opensql'
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'ft_test');
 
-  -- TEST 5: ALTER FOREIGN TABLE working as intended
+  -- TEST 5: ALTER FOREIGN TABLE 정상 동작 확인
   SELECT lives_ok('ALTER FOREIGN TABLE ft5 DROP COLUMN c0');
 
-  -- TEST 6: Try to drop a non-existent column - throws error
+  -- TEST 6: 존재하지 않는 Column을 DROP 하려는 경우 에러 발생 확인
   SELECT throws_ok('ALTER FOREIGN TABLE ft5 DROP COLUMN cx');
 
-  -- TEST 7: everything back to normal
+  -- TEST 7: 정상 동작 확인
   SELECT lives_ok('SELECT * FROM ft5');
 
   SELECT * FROM finish();

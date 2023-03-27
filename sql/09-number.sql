@@ -13,7 +13,6 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  -- TEST 1:
   CREATE FOREIGN TABLE n_ft (
       nb_default NUMERIC,
       nb_380 NUMERIC(38,0),
@@ -24,9 +23,10 @@ BEGIN;
       flt FLOAT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
+  -- TEST 1
   SELECT lives_ok(
     'SELECT * FROM n_ft',
-    'Tibero NUMBER, FLOAT 타입 호환 검증'
+    'Tibero NUMBER, FLOAT 타입과 Postgres NUMERIC 타입 호환 검증'
   );
 
   CREATE FOREIGN TABLE n_prec (
@@ -34,19 +34,20 @@ BEGIN;
       nb_gtm    NUMERIC(12, 4)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
+  -- TEST 2
   SELECT is(
     (SELECT SUM(CASE WHEN nb_38191 = '123456.12'::numeric THEN 1 ELSE 0 END) FROM n_prec)::INTEGER,
     2,
     'Precision 검증'
   );
 
+  -- TEST 3
   SELECT is(
     (SELECT SUM(CASE WHEN nb_gtm = '0.6543'::numeric THEN 1 ELSE 0 END) FROM n_prec)::INTEGER,
     4,
     'Precision 검증'
   );
 
-  -- TEST 4: Tibero NUMBER, FLOAT <-> Postgres CHAR 호환 검증
   CREATE FOREIGN TABLE n_ft1 (
       nb_default CHAR(39),
       nb_380 CHAR(39),
@@ -57,9 +58,11 @@ BEGIN;
       flt CHAR(39)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
-  SELECT lives_ok('SELECT * FROM n_ft1');
+  -- TEST 4
+  SELECT lives_ok('SELECT * FROM n_ft1',
+    'Tibero NUMBER, FLOAT 타입과 Postgres CHAR 타입 호환 검증'
+  );
 
-  -- TEST 5: Tibero NUMBER, FLOAT <-> Postgres VARCHAR 호환 검증
   CREATE FOREIGN TABLE n_ft2 (
       nb_default VARCHAR(39),
       nb_380 VARCHAR(39),
@@ -70,9 +73,11 @@ BEGIN;
       flt VARCHAR(39)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
-  SELECT lives_ok('SELECT * FROM n_ft2');
+  -- TEST 5
+  SELECT lives_ok('SELECT * FROM n_ft2',
+    'Tibero NUMBER, FLOAT 타입과 Postgres VARCHAR 타입 호환 검증'
+  );
 
-  -- TEST 6: Tibero NUMBER, fLOAT <-> Postgres TEXT 호환 검증
   CREATE FOREIGN TABLE n_ft3 (
       nb_default TEXT,
       nb_380 TEXT,
@@ -83,9 +88,11 @@ BEGIN;
       flt TEXT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
-  SELECT lives_ok('SELECT * FROM n_ft3');
+  -- TEST 6
+  SELECT lives_ok('SELECT * FROM n_ft3',
+    'Tibero NUMBER, FLOAT 타입과 Postgres TEXT 타입 호환 검증'
+  );
 
-  -- TEST 7: Tibero NUMBER, FLOAT (소수점 이하 자리 없는) <-> Postgres SMALLINT 호환 검증
   CREATE FOREIGN TABLE n_ft4 (
       nb_default SMALLINT,
       nb_380 SMALLINT,
@@ -96,9 +103,11 @@ BEGIN;
       flt SMALLINT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'smallint_test');
 
-  SELECT lives_ok('SELECT * FROM n_ft4');
+  -- TEST 7
+  SELECT lives_ok('SELECT * FROM n_ft4',
+    'Tibero NUMBER, FLOAT 타입과 Postgres SMALLINT 타입 호환 검증'
+  );
 
-  -- TEST 8: Tibero NUMBER, FLOAT <->  Postgres SMALLINT 호환 안 되는 값 가져올 시 에러 발생 검증
   CREATE FOREIGN TABLE n_ft5 (
       nb_default SMALLINT,
       nb_380 SMALLINT,
@@ -109,13 +118,14 @@ BEGIN;
       flt SMALLINT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'smallint_test_err');
 
-  -- 22003: NUMERIC value out of range 
+  -- TEST 8
   SELECT throws_ok(
     'SELECT * FROM n_ft5',
-    '22003'
+    '22003',
+    'value "-32769" is out of range for type smallint',
+    '호환되지 않는 Tibero NUMBER, FLOAT 타입 값을 Postgres SMALLINT로 가져올 시 에러 발생 검증'
   );
 
-  -- TEST 9: Tibero NUMBER <-> Postgres INTEGER 호환 검증
   CREATE FOREIGN TABLE n_ft6 (
     nb_default INTEGER,
     nb_380 INTEGER,
@@ -126,11 +136,12 @@ BEGIN;
     flt INTEGER
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'integer_test');
 
+  -- TEST 9
   SELECT lives_ok(
-    'SELECT * FROM n_ft6'
+    'SELECT * FROM n_ft6',
+    'Tibero NUMBER <-> Postgres INTEGER 호환 검증'
   );
 
-  -- TEST 10: Tibero NUMBER <-> Postgres INTEGER 범위를 넘는 값 가져올 시 에러 발생 검증
   CREATE FOREIGN TABLE n_ft7 (
       nb_default INTEGER,
       nb_380 INTEGER,
@@ -141,12 +152,14 @@ BEGIN;
       flt INTEGER
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'integer_test_err');
 
+  -- TEST 10
   SELECT throws_ok(
     'SELECT * FROM n_ft7',
-    '22003'
+    '22003',
+    'value "-2147483649" is out of range for type integer',
+    '호환되지 않는 Tibero NUMBER 타입 값을 Postgres INTEGER로 가져올 시 에러 발생 검증'
   );
 
-  -- TEST 11: Tibero NUMBER <-> Postgres BIGINT 호환 검증
   CREATE FOREIGN TABLE n_ft8 (
       nb_default BIGINT,
       nb_380 BIGINT,
@@ -157,11 +170,12 @@ BEGIN;
       flt BIGINT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'bigint_test');
 
+  -- TEST 11
   SELECT lives_ok(
-    'SELECT * FROM n_ft8'
+    'SELECT * FROM n_ft8',
+    'Tibero NUMBER <-> Postgres BIGINT 타입 호환 검증'
   );
 
-  -- TEST 12: Tibero NUMBER <-> Postgres BIGINT 범위를 넘는 값 가져올 시 에러 발생 검증
   CREATE FOREIGN TABLE n_ft9 (
       nb_default BIGINT,
       nb_380 BIGINT,
@@ -172,12 +186,14 @@ BEGIN;
       flt BIGINT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'bigint_test_err');
 
+  -- TEST 12
   SELECT throws_ok(
     'SELECT * FROM n_ft9',
-    '22003'
+    '22003',
+    'value "-9223372036854775809" is out of range for type bigint',
+    '호환되지 않는 Tibero NUMBER 타입 값을 Postgres BIGINT로 가져올 시 에러 발생 검증'
   );
 
-  -- TEST 13: Tibero NUMBER <-> Postgres REAL 호환 검증
   CREATE FOREIGN TABLE n_ft10 (
       nb_default REAL,
       nb_380 REAL,
@@ -188,11 +204,12 @@ BEGIN;
       flt REAL
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'r_and_dp_test');
 
+  -- TEST 13
   SELECT lives_ok(
-    'SELECT * FROM n_ft10'
+    'SELECT * FROM n_ft10',
+    'Tibero NUMBER <-> Postgres REAL 타입 호환 검증'
   );
 
-  -- TEST 14: Tibero NUMBER <-> Postgres PRECISION 호환 검증
   CREATE FOREIGN TABLE n_ft11 (
       nb_default DOUBLE PRECISION,
       nb_380 DOUBLE PRECISION,
@@ -203,11 +220,12 @@ BEGIN;
       flt DOUBLE PRECISION
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'r_and_dp_test');
 
+  -- TEST 14
   SELECT lives_ok(
-    'SELECT * FROM n_ft11'
+    'SELECT * FROM n_ft11',
+    'Tibero NUMBER <-> Postgres PRECISION 타입 호환 검증'
   );
 
-  -- TEST 15: Numeric field overflow 발생 검증
   CREATE FOREIGN TABLE n_ft12 (
       nb_default NUMERIC(2,1),
       nb_380 NUMERIC(2,1),
@@ -218,6 +236,7 @@ BEGIN;
       flt FLOAT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
+  -- TEST 15
   SELECT throws_ok(
     'SELECT * FROM n_ft12',
     '22003',
