@@ -1,5 +1,5 @@
 #!/bin/bash
-. ./test.conf
+. $(dirname "$0")/test.conf
 
 if [[ -z ${TIBERO_HOST} ]] || [[ -z ${TIBERO_PORT} ]] || [[ -z ${TIBERO_USER} ]] || [[ -z ${TIBERO_PASS} ]] || [[ -z ${TIBERO_DB} ]];
 then
@@ -28,7 +28,7 @@ else
   TARGET="$@"
 fi
 
-pg_prove --verbose --set TIBERO_HOST=$TIBERO_HOST --set TIBERO_PORT=$TIBERO_PORT \
+pg_prove --verbose --norc --set TIBERO_HOST=$TIBERO_HOST --set TIBERO_PORT=$TIBERO_PORT \
   --set TIBERO_USER=$TIBERO_USER --set TIBERO_PASS=$TIBERO_PASS --set TIBERO_DB=$TIBERO_DB \
   --set PSQLRC=default $PG_USROPT $PG_DBOPT --pset tuples_only=1 $TARGET
 

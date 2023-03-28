@@ -1,3 +1,4 @@
+-- Tibero에 pgTAP 테스트를 위한 Database를 초기화합니다.
 DROP TABLE just_conn_test_table;
 DROP TABLE t1;
 DROP TABLE t2;
