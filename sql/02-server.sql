@@ -25,48 +25,48 @@ BEGIN;
   -- TEST 1
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
-    'Connection 확인'
+    'Test connection'
   );
 
   -- TEST 2
   SELECT alike(
     (SELECT characterset_name FROM charset_check LIMIT 1),
     'UTF%',
-    '원격 Tibero 서버의 CHARACTERSET_NAME 확인'
+    'Test CHARACTERSET_NAME of remote Tibero server - must be of Unicode family'
   );
 
   -- TEST 3
   SELECT alike(
     (SELECT nchar_characterset_name FROM charset_check LIMIT 1),
     'UTF%',
-    '원격 Tibero 서버의 nchar CHARACTERSET_NAME 확인'
+    'Test NCHAR_CHARACTERSET_NAME of remote Tibero server - must be of Unicode family'
   );
 
-  -- TEST 4: port와 dbname 옵션이 없는 경우 에러 발생 확인
+  -- TEST 4: Check error is thrown when port and dbname options are not given
   ALTER SERVER server_name OPTIONS (DROP port);
   ALTER SERVER server_name OPTIONS (DROP dbname);
   SELECT throws_ok('SELECT * FROM just_conn_test_table;');
 
-  -- TEST 5: host와 port 옵션이 없는 경우 에러 발생 확인
+  -- TEST 5: Check error is thrown when host and port options are not given
   ALTER SERVER server_name OPTIONS (DROP host);
   ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
   SELECT throws_ok('SELECT * FROM just_conn_test_table;');
    
-  -- TEST 6: host와 dbname 옵션이 없는 경우 에러 발생 확인 
+  -- TEST 6: Check error is thrown when host and dbname options are not given
   ALTER SERVER server_name OPTIONS (DROP dbname);
   ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
-  -- TEST 7: host 옵션이 없는 경우 에러 발생 확인
+  -- TEST 7: Check error is thrown when host option is not given
   ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
-  -- TEST 8: port 옵션이 없는 경우 에러 발생 확인
+  -- TEST 8: Check error is thrown when port option is not given
   ALTER SERVER server_name OPTIONS (DROP port);
   ALTER SERVER server_name OPTIONS (ADD host :TIBERO_HOST);
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
-  -- TEST 9: dbname 옵션이 없는 경우 에러 발생 확인
+  -- TEST 9: Check error is thrown when dbname option is not given
   ALTER SERVER server_name OPTIONS (DROP dbname);
   ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
@@ -75,16 +75,16 @@ BEGIN;
   ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
-    'host, port, dbname 옵션을 주었을 때 정상 동작 확인'
+    'Check the connection works again when the valid host, port, dbname options are given'
   );
 
-  -- TEST 11: username 옵션 없는 경우 에러 발생 확인 
+  -- TEST 11: Check error is thrown when username option is not given
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
     OPTIONS (DROP username);
   SELECT throws_ok('
     SELECT * FROM just_conn_test_table;');
 
-  -- TEST 12: password 옵션 없는 경우 에러 발생 확인
+  -- TEST 12: Check error is thrown when password option is not given
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
     OPTIONS (ADD username :TIBERO_USER);
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
@@ -97,7 +97,7 @@ BEGIN;
     OPTIONS (ADD password :TIBERO_PASS);
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
-    'username, password 옵션을 주었을 때 정상 동작 확인'
+    'Check the connection works again when the valid username, password options are given'
   );
 
   -- Finish the tests and clean up.

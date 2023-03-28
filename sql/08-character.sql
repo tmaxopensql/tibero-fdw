@@ -32,21 +32,21 @@ BEGIN;
   SELECT is(
     (SELECT c_kor FROM ft8),
     '가',
-    '한국어 문자열 SELECT 확인'
+    'Check SELECT a Korean character'
   );
 
   -- TEST 2
   SELECT is(
     (SELECT nc_kor_full FROM ft8),
     '가나다라마바사아자차카타파하',
-    '한국어 다중길이 문자열 SELECT 확인'
+    'Check SELECT Korean characters'
   );
 
   -- TEST 3
   SELECT is(
     (SELECT nc_spc_full FROM ft8),
     '!@#$%^&*()<>/\\''',
-    '특수문자 SELECT 확인'
+    'Check SELECT special characters'
   );
   
   -- TEST 4
@@ -60,7 +60,7 @@ BEGIN;
       '가나다라마바사아자차카타파하'::char(2000),
       'abcdefghijklmnopqrstuvwxyz'::char(2000),
       '!@#$%^&*()<>/\\'''::char(2000)),
-    '모든 열 CHAR 타입으로 결과 SELECT 확인'
+    'Check SELECT into CHAR type columns'
   );
 
   CREATE FOREIGN TABLE err_ft8 (
@@ -83,7 +83,7 @@ BEGIN;
     'SELECT c_kor_full FROM err_ft8',
     '22001',
     'value too long for type character(1)',
-    'CHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into CHAR(1) type column'
   );
 
   -- TEST 6
@@ -91,7 +91,7 @@ BEGIN;
     'SELECT nc_spc_full FROM err_ft8',
     '22001',
     'value too long for type character(1)',
-    'NCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into NCHAR(1) type column'
   );
 
   CREATE FOREIGN TABLE ft9 (
@@ -120,7 +120,7 @@ BEGIN;
       '가나다라마바사아자차카타파하'::VARCHAR,
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR,
       '!@#$%^&*()<>/\\'''::VARCHAR),
-    '모든 열 VARCHAR 타입으로 결과 SELECT 확인'
+    'Check SELECT into VARCHAR type columns'
   );
 
   CREATE FOREIGN TABLE err_ft9 (
@@ -143,7 +143,7 @@ BEGIN;
     'SELECT vc_kor_full FROM err_ft9',
     '22001',
     'value too long for type character varying(1)',
-    'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into VARCHAR(1) type column'
   );
 
   -- TEST 9
@@ -151,7 +151,7 @@ BEGIN;
     'SELECT vc_eng_full FROM err_ft9',
     '22001',
     'value too long for type character varying(1)',
-    'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into VARCHAR(1) type column'
   );
 
   -- TEST 10
@@ -159,7 +159,7 @@ BEGIN;
     'SELECT vc_spc_full FROM err_ft9',
     '22001',
     'value too long for type character varying(1)',
-    'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into VARCHAR(1) type column'
   );
 
   CREATE FOREIGN TABLE ft10 (
@@ -188,7 +188,7 @@ BEGIN;
       '가나다라마바사아자차카타파하'::TEXT,
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT),
-    'TEXT 타입 컬럼 결과값 가져오는 것 검증'
+    'Check SELECT into TEXT type columns'
   );
 
   CREATE FOREIGN TABLE char_err_ft10 (
@@ -211,7 +211,7 @@ BEGIN;
     'SELECT * FROM char_err_ft10',
     '22001',
     'value too long for type character(1)',
-    'CHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into CHAR(1) type column'
   );
 
   CREATE FOREIGN TABLE varchar_err_ft10 (
@@ -234,7 +234,7 @@ BEGIN;
     'SELECT * FROM varchar_err_ft10',
     '22001',
     'value too long for type character varying(1)',
-    'VARCHAR(1) 타입 컬럼으로 긴 문자열을 받아오려는 경우 에러 발생 여부 확인'
+    'Check an error is thrown when trying to fetch long text into VARCHAR(1) type column'
   );
 
   CREATE FOREIGN TABLE ft11 (
@@ -245,7 +245,7 @@ BEGIN;
   SELECT is(
     (SELECT * FROM ft11),
     'AAAArFAAAAAACTFAAA',
-    'ROWID 데이터 조회 확인'
+    'Check SELECT Tibero ROWID type column'
   );
 
   -- Finish the tests and clean up.

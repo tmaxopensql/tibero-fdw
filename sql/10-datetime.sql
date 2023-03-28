@@ -13,7 +13,6 @@ BEGIN;
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
 
-  -- TEST 1:
   CREATE FOREIGN TABLE d_ft1 (
       dt DATE,
       dt_bc9999 DATE,
@@ -36,9 +35,11 @@ BEGIN;
       tslz_ad TIMESTAMP WITH TIME ZONE
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
 
+  -- TEST 1
   SELECT is(
     (SELECT TO_CHAR(dt, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 00:00:00.000000'
+    '2023-01-01 00:00:00.000000',
+    'Verify compatibility of Tibero DATE and Postgres DATE'
   );
 
   -- TEST skipped. Refer to known_issue/ for detail.
@@ -58,24 +59,32 @@ BEGIN;
   );
   */
 
+  -- TEST 4
   SELECT is(
     (SELECT TO_CHAR(dt_detail, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 00:00:00.000000'
+    '2023-01-01 00:00:00.000000',
+    'Verify compatibility of Tibero DATE and Postgres DATE with .FF6 format'
   );
 
+  -- TEST 5
   SELECT is(
     (SELECT TO_CHAR(ts, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 12:34:56.123456'
+    '2023-01-01 12:34:56.123456',
+    'Verify compatibility of Tibero TIMESTAMP and Postgres TIMESTAMP'
   );
 
+  -- TEST 6
   SELECT is(
     (SELECT TO_CHAR(ts1, 'YYYY-MM-DD HH24:MI:SS.FF1') FROM d_ft1),
-    '2023-01-01 12:34:56.1'
+    '2023-01-01 12:34:56.1',
+    'Verify compatibility of Tibero DATE and Postgres DATE with .FF1 format'
   );
 
+  -- TEST 7
   SELECT is(
     (SELECT TO_CHAR(ts6, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 12:34:56.123456'
+    '2023-01-01 12:34:56.123456',
+    'Verify compatibility of Tibero TIMESTAMP and Postgres TIMESTAMP with .FF6 format'
   );
 
   -- TEST skipped. Refer to known_issue/ for detail.
@@ -99,19 +108,22 @@ BEGIN;
   -- TEST 10:
   SELECT is(
     (SELECT TO_CHAR(tsz, 'YYYY-MM-DD HH24:MI:SS.FF6 TZ') FROM d_ft1),
-    '2023-01-01 21:34:56.123456 KST'
+    '2023-01-01 21:34:56.123456 KST',
+    'Verify compatibility of Tibero TIMESTAMP WITH TIME ZONE and Postgres TIMESTAMP WITH TIME ZONE'
   );
 
   -- TEST 11:
   SELECT is(
     (SELECT TO_CHAR(tsz1, 'YYYY-MM-DD HH24:MI:SS.FF1 TZ') FROM d_ft1),
-    '2023-01-01 21:34:56.1 KST'
+    '2023-01-01 21:34:56.1 KST',
+    'Verify compatibility of Tibero TIMESTAMP WITH TIME ZONE and Postgres TIMESTAMP WITH TIME ZONE with .FF1 format'
   );
 
   -- TEST 12:
   SELECT is(
     (SELECT TO_CHAR(tsz6, 'YYYY-MM-DD HH24:MI:SS.FF6 TZ') FROM d_ft1),
-    '2023-01-01 21:34:56.123456 KST'
+    '2023-01-01 21:34:56.123456 KST',
+    'Verify compatibility of Tibero TIMESTAMP WITH TIME ZONE and Postgres TIMESTAMP WITH TIME ZONE with .FF6 format'
   );
 
   -- TEST skipped. Refer to known_issue/ for detail.
@@ -132,23 +144,25 @@ BEGIN;
   );
   */
 
-  -- TEST 15: WITH LOCAL TIME ZONE 옵션으로 생성된 Column 변환 확인
-  -- KST를 항상 전제하는 건지? (Tibero에서 삽입할 때 12:34:56, 변환하면 21:34:56)
+  -- TEST 15
   SELECT is(
     (SELECT TO_CHAR(tslz, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 21:34:56.123456'
+    '2023-01-01 21:34:56.123456',
+    'Verify compatibility of Tibero TIMESTAMP WITH LOCAL TIME ZONE and Postgres TIMESTAMP WITH LOCAL TIME ZONE'
   );
 
   -- TEST 16
   SELECT is(
     (SELECT TO_CHAR(tslz1, 'YYYY-MM-DD HH24:MI:SS.FF1') FROM d_ft1),
-    '2023-01-01 21:34:56.1'
+    '2023-01-01 21:34:56.1',
+    'Verify compatibility of Tibero TIMESTAMP WITH LOCAL TIME ZONE and Postgres TIMESTAMP WITH LOCAL TIME ZONE with .FF1 format'
   );
 
   -- TEST 17
   SELECT is(
     (SELECT TO_CHAR(tslz6, 'YYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    '2023-01-01 21:34:56.123456'
+    '2023-01-01 21:34:56.123456',
+    'Verify compatibility of Tibero TIMESTAMP WITH LOCAL TIME ZONE and Postgres TIMESTAMP WITH LOCAL TIME ZONE with .FF6 format'
   );
 
   -- TEST skipped. Refer to known_issue/ for detail.
@@ -169,9 +183,6 @@ BEGIN;
   );
   */
 
-  -- INTERVAL 관련 테스트 케이스
-  -- INTERVAL '11-05' YEAR TO MONTH 형태로 Tibero에 저장된 Interval 값을 뒷자리가 짤리는 에러가 있음.
-
   CREATE FOREIGN TABLE d_ft2 (
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
@@ -179,16 +190,17 @@ BEGIN;
 
   -- TEST 20
   SELECT lives_ok(
-    'SELECT * FROM d_ft2'
+    'SELECT * FROM d_ft2',
+    'Verify compatibility between Tibero INTERVAL(9) TO MONTH and Postgres INTERVAL YEAR TO MONTH'
   );
 
   -- TEST 21
   SELECT is(
     (SELECT COUNT(*) FROM d_ft2 WHERE iytm = INTERVAL '178000000-11' YEAR TO MONTH ),
-    10::BIGINT
+    10::BIGINT,
+    'Verify INTERVAL YEAR TO MONTH compatibility of values with partial months defined'
   );
 
-  -- Tibero DATE <-> Postgres TIMESTAMP 호환 검증
   CREATE FOREIGN TABLE d_ft3 (
       dt TIMESTAMP,
       dt_bc9999 TIMESTAMP,
@@ -213,10 +225,10 @@ BEGIN;
 
   -- TEST 22:
   SELECT lives_ok(
-    'SELECT * FROM d_ft3'
+    'SELECT * FROM d_ft3',
+    'Verify compatibility between Tibero DATE, TIMESTAMP types and Postgres TIMESTAMP'
   );
 
-  -- Tibero DATE <-> Postgres CHAR 호환 검증
   CREATE FOREIGN TABLE d_ft4 (
       dt CHAR(20),
       dt_bc9999 CHAR(20),
@@ -241,10 +253,10 @@ BEGIN;
 
   -- TEST 23:
   SELECT lives_ok(
-    'SELECT * FROM d_ft4'
+    'SELECT * FROM d_ft4',
+    'Verify compatibility between Tibero DATE, TIMESTAMP types and Postgres CHAR type'
   );
 
-  -- Tibero DATE <-> Postgres VARCHAR 호환 검증
   CREATE FOREIGN TABLE d_ft5 (
       dt VARCHAR(20),
       dt_bc9999 VARCHAR(20),
@@ -269,10 +281,10 @@ BEGIN;
 
   -- TEST 24:
   SELECT lives_ok(
-    'SELECT * FROM d_ft5'
+    'SELECT * FROM d_ft5',
+    'Verify compatibility between Tibero DATE, TIMESTAMP types and Postgres VARCHAR type'
   );
 
-  -- Tibero DATE <-> Postgres TEXT 호환 검증
   CREATE FOREIGN TABLE d_ft6 (
       dt TEXT,
       dt_bc9999 TEXT,
@@ -297,10 +309,10 @@ BEGIN;
 
   -- TEST 25:
   SELECT lives_ok(
-    'SELECT * FROM d_ft6'
+    'SELECT * FROM d_ft6',
+    'Verify compatibility between Tibero DATE, TIMESTAMP types and Postgres TEXT type'
   );
 
- -- Tibero DATE <-> Postgres DATE 호환 검증
   CREATE FOREIGN TABLE d_ft7 (
       dt DATE,
       dt_bc9999 DATE,
@@ -325,14 +337,14 @@ BEGIN;
 
   -- TEST 26:
   SELECT lives_ok(
-    'SELECT * FROM d_ft7'
+    'SELECT * FROM d_ft7',
+    'Verify compatibility between Tibero DATE, TIMESTAMP types and Postgres DATE type'
   );
 
   ------------------------------------------------------
   -- SELECT Data type valid matching range INTERVAL
   ------------------------------------------------------
 
-  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
   CREATE FOREIGN TABLE d_ft8 (
     iytm    CHAR(50),
     idts    CHAR(50)
@@ -340,10 +352,10 @@ BEGIN;
 
   -- TEST 27:
   SELECT lives_ok(
-    'SELECT * FROM d_ft8'
+    'SELECT * FROM d_ft8',
+    'Verify compatibility between Tibero INTERVAL type and Postgres CHAR type'
   );
 
-  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
   CREATE FOREIGN TABLE d_ft9 (
     iytm    VARCHAR(50),
     idts    VARCHAR(50)
@@ -351,10 +363,10 @@ BEGIN;
 
   -- TEST 28:
   SELECT lives_ok(
-    'SELECT * FROM d_ft9'
+    'SELECT * FROM d_ft9',
+    'Verify compatibility between Tibero INTERVAL type and Postgres VARCHAR type'
   );
 
-  -- Tibero INTERVAL <-> Postgres CHAR 호환 검증
   CREATE FOREIGN TABLE d_ft10 (
     iytm    TEXT,
     idts    TEXT
@@ -362,7 +374,8 @@ BEGIN;
 
   -- TEST 29:
   SELECT lives_ok(
-    'SELECT * FROM d_ft10'
+    'SELECT * FROM d_ft10',
+    'Verify compatibility between Tibero INTERVAL type and Postgres TEXT type'
   );
 
   -- Finish the tests and clean up.

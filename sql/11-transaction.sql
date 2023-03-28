@@ -38,19 +38,22 @@ BEGIN;
       flt FLOAT
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
 
-  -- TEST 1: Foreign Table 2개 한번에 조회
+  -- TEST 1
   SELECT lives_ok(
-    'SELECT * FROM tx_ft1, tx_ft2;'
+    'SELECT * FROM tx_ft1, tx_ft2;',
+    'Check SELECT FROM multiple foreign tables within single transaction'
   );
 
-  -- TEST 2:
+  -- TEST 2
   SELECT lives_ok(
-    'SELECT * FROM tx_ft1;'
+    'SELECT * FROM tx_ft1;',
+    'Check SELECT FROM multiple foreign tables within single transaction'
   );
 
-  -- TEST 3:
+  -- TEST 3
   SELECT lives_ok(
-    'SELECT * FROM tx_ft2;'
+    'SELECT * FROM tx_ft2;',
+    'Check SELECT FROM multiple foreign tables within single transaction'
   );
 
   CREATE FOREIGN TABLE idx_ft1 (
@@ -72,7 +75,8 @@ BEGIN;
   SELECT throws_ok(
     'CREATE INDEX ON idx_ft1(nvc_kor)',
     '42809',
-    'cannot create index on foreign table "idx_ft1"'
+    'cannot create index on foreign table "idx_ft1"',
+    'Check an error is thrown when trying to create an index on foreign table''s column'
   );
 
   -- Finish the tests and clean up.

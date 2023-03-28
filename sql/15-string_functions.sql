@@ -64,7 +64,7 @@ FROM string_test_table',
     $$VALUES (
       '가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\''가a!가나다라마바사아자차카타파하abcdefghijklmnopqrstuvwxyz!@#$%^&*()<>/\\'''::TEXT)
     $$,
-    '문자열 Concatenate (||) 함수 검증'
+    'Verify Concatenate (||) function'
   );
 
   -- TEST 2
@@ -145,7 +145,7 @@ FROM string_test_table',
       208::INTEGER,
       128::INTEGER)
     $$,
-    '문자열 bit_length() 함수 검증'
+    'Verify bit_length() function'
   );
 
   -- TEST 3
@@ -226,7 +226,7 @@ FROM string_test_table',
       26::INTEGER,
       16::INTEGER)
     $$,
-    '문자열 char_length() 함수 검증'
+    'Verify char_length() function'
   );
 
   -- TEST 4
@@ -307,7 +307,7 @@ FROM string_test_table',
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT)
     $$,
-    '문자열 lower() 함수 검증'
+    'Verify lower() function'
   );
 
   -- TEST 5
@@ -388,7 +388,7 @@ FROM string_test_table',
       26::INTEGER,
       16::INTEGER)
     $$,
-    '문자열 octet_length() 함수 검증'
+    'Verify octet_length() function'
   );
 
   -- TEST 6
@@ -504,7 +504,7 @@ FROM string_test_table',
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '+*()<>/\\'''::TEXT)
     $$,
-    '문자열 overlay() 함수 검증'
+    'Verify overlay() function'
   );
 
   -- TEST 7
@@ -585,7 +585,7 @@ FROM string_test_table',
       13::INTEGER,
       9::INTEGER)
     $$,
-    '문자열 position() 함수 검증'
+    'Verify position() function'
   );
 
   -- TEST 8
@@ -666,7 +666,7 @@ FROM string_test_table',
       'cdefghi'::TEXT,
       '#$%^&*('::TEXT)
     $$,
-    '문자열 substring() 함수 검증'
+    'Verify substring() function'
   );
 
   -- TEST 9
@@ -747,7 +747,7 @@ FROM string_test_table',
       'defghijklmnopqrstuvw'::TEXT,
       '$%^&*()<>/\\'''::TEXT)
     $$,
-    '문자열 trim() 함수 검증'
+    'Verify trim() function'
   );
 
   -- TEST 10
@@ -828,7 +828,7 @@ FROM string_test_table',
       'ABCDEFGHIJKLMNOPQRSTUVWXYZ'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT)
     $$,
-    '문자열 upper() 함수 검증'
+    'Verify upper() function'
   );
 
   -- Finish the tests and clean up.

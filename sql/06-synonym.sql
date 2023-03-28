@@ -31,8 +31,11 @@ BEGIN;
       col_interval_ds INTERVAL
   ) SERVER server_name OPTIONS ( owner_name :TIBERO_USER, table_name 'ex_syn');
 
-  -- TEST 1: 원격 DB의 SYNONYM Foreign Table로 조회
-  SELECT lives_ok('SELECT * FROM syn_table');
+  -- TEST 1
+  SELECT lives_ok(
+    'SELECT * FROM syn_table',
+    'Check SELECT FROM foreign table created on foreign SYNONYM'
+  );
 
   SELECT * FROM finish();
 ROLLBACK;

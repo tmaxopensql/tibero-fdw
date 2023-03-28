@@ -19,7 +19,7 @@ BEGIN;
       WHERE srvname = 'fetch_server_100' AND
             srvoptions @> array['fetch_size=100'])::integer,
     1,
-    'CREATE SERVER 명령어의 fetch_size 옵션 pg_foreign_server 테이블 카탈로그의 srvoptions 열에 반영되는 것 확인'
+    'Check fetch_size option of CREATE SERVER command is saved on pg_foreign_server catalog as intended'
   );
 
   -- TEST 2
@@ -29,7 +29,7 @@ BEGIN;
       WHERE srvname = 'fetch_server_100' AND
             srvoptions @> array['fetch_size=100'])::integer,
     0,
-    'ALTER SERVER 명령어로 fetch_size 옵션 변경한 내용 반영되는 것 확인'
+    'Check fetch_size option of ALTER SERVER command is applied as intended on pg_foreign_server catalog'
   );
 
   -- TEST 3
@@ -39,7 +39,7 @@ BEGIN;
       WHERE srvname = 'fetch_server_100' AND
             srvoptions @> array['fetch_size=101'])::integer,
     1,
-    'ALTER SERVER 명령어로 fetch_size 옵션 변경한 내용 반영되는 것 확인'
+    'Check fetch_size option of ALTER SERVER command is applied as intended on pg_foreign_server catalog'
   );
 
   -- TEST 4
@@ -52,7 +52,7 @@ BEGIN;
       WHERE ftrelid = 'fetch_table_1000'::regclass
         AND ftoptions @> array['fetch_size=1000'])::integer,
     1,
-    'CREATE FOREIGN TABLE 명령어의 fetch_size 옵션 pg_foreign_table 테이블 카탈로그의 ftoptions 열에 반영되는 것 확인');
+    'Check fetch_size option of CREATE FOREIGN TABLE command is applied as intended on pg_foreign_table catalog');
 
   ALTER FOREIGN TABLE fetch_table_1000 OPTIONS (SET fetch_size '1001');
 
@@ -62,7 +62,7 @@ BEGIN;
       WHERE ftrelid = 'fetch_table_1000'::regclass
         AND ftoptions @> array['fetch_size=1000'])::integer,
     0,
-    'ALTER FOREIGN TABLE 명령어로 fetch_size 옵션 변경한 내용 반영되는 것 확인'
+    'Check fetch_size option of ALTER FOREIGN TABLE command is applied as intended on pg_foreign_table catalog'
   );
 
   -- TEST 6
@@ -71,7 +71,7 @@ BEGIN;
       WHERE ftrelid = 'fetch_table_1000'::regclass
         AND ftoptions @> array['fetch_size=1001'])::integer,
     1,
-    'ALTER FOREIGN TABLE 명령어로 fetch_size 옵션 변경한 내용 반영되는 것 확인'
+    'Check fetch_size option of ALTER FOREIGN TABLE command is applied as intended on pg_foreign_table catalog'
   );
 
   SELECT * FROM finish();

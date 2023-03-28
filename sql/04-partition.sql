@@ -22,7 +22,7 @@ BEGIN;
   -- TEST 1
   SELECT lives_ok('
     SELECT * FROM range_parent_pt',
-    'RANGE(DATE) 조건으로 파티션 된 Foreign Table 조회'
+    'Check SELECT FROM foreign table partitioned with RANGE(DATE) condition'
   );
 
   CREATE FOREIGN TABLE list_parent_pt (
@@ -34,7 +34,7 @@ BEGIN;
   -- TEST 2
   SELECT lives_ok('
     SELECT * FROM list_parent_pt',
-    'LIST(VARCHAR) 조건으로 파티션 된 Foreign Table 조회'
+    'Check SELECT FROM foreign table partitioned with LIST(VARCHAR) condition'
   );
 
   CREATE FOREIGN TABLE hash_parent_pt (
@@ -46,7 +46,7 @@ BEGIN;
   -- TEST 3
   SELECT lives_ok('
     SELECT * FROM hash_parent_pt',
-    'HASH(INT) 조건으로 파티션 된 Foreign Table 조회'
+    'Check SELECT FROM foreign table partitioned with HASH(INT) condition'
   );
 
   SELECT * FROM finish();

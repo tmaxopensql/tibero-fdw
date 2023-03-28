@@ -261,7 +261,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 20: abs() 함수 
+  -- TEST 20: abs() function 
   SELECT results_eq('
     SELECT abs(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -277,7 +277,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 21: cbrt() 함수
+  -- TEST 21: cbrt() function
   SELECT results_eq('
     SELECT cbrt(nb_default) FROM math_func_test_table WHERE nb_default >0',
     ARRAY[
@@ -288,7 +288,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 22: ceil() 함수
+  -- TEST 22: ceil() function
   SELECT results_eq('
     SELECT ceil(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -304,7 +304,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 23: ceiling() 함수
+  -- TEST 23: ceiling() function
   SELECT results_eq('
     SELECT ceiling(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -320,7 +320,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 24: degrees() 함수
+  -- TEST 24: degrees() function
   SELECT results_eq('
     SELECT degrees(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -336,7 +336,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 25: div() 함수
+  -- TEST 25: div() function
   SELECT results_eq('
     SELECT div(nb_default, nb_default) FROM math_func_test_table',
     ARRAY[
@@ -352,7 +352,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 26: exp() 함수
+  -- TEST 26: exp() function
   SELECT results_eq('
     SELECT exp(nb_default) FROM math_func_test_table WHERE nb_default < 1000',
     ARRAY[
@@ -366,7 +366,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 27: floor() 함수
+  -- TEST 27: floor() function
   SELECT results_eq('
     SELECT floor(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -382,7 +382,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 28: gcd() 함수
+  -- TEST 28: gcd() function
   SELECT results_eq('
     SELECT gcd(nb_default,nb_default) FROM math_func_test_table',
     ARRAY[
@@ -398,7 +398,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 29: lcm() 함수
+  -- TEST 29: lcm() function
   SELECT results_eq('
     SELECT lcm(nb_default,nb_default)FROM math_func_test_table',
     ARRAY[
@@ -414,7 +414,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 30: ln() 함수
+  -- TEST 30: ln() function
   SELECT results_eq('
     SELECT ln(nb_default) FROM math_func_test_table WHERE nb_default > 0',
     ARRAY[
@@ -425,7 +425,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 31: log() 함수
+  -- TEST 31: log() function
   SELECT results_eq('
     SELECT log(nb_default) FROM math_func_test_table WHERE nb_default > 0',
     ARRAY[
@@ -436,7 +436,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 32: log10() 함수
+  -- TEST 32: log10() function
   SELECT results_eq('
     SELECT log10(nb_default) FROM math_func_test_table WHERE nb_default > 0',
     ARRAY[
@@ -447,7 +447,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 33: min_scale() 함수
+  -- TEST 33: min_scale() function
   SELECT results_eq('
     SELECT min_scale(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -463,7 +463,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 34: mod() 함수
+  -- TEST 34: mod() function
   SELECT results_eq('
     SELECT mod(nb_default,nb_default) FROM math_func_test_table',
     ARRAY[
@@ -479,7 +479,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 35: radians() 함수
+  -- TEST 35: radians() function
   SELECT results_eq('
     SELECT radians(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -495,7 +495,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 36: round() 함수
+  -- TEST 36: round() function
   SELECT results_eq('
     SELECT round(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -511,7 +511,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 37: scale() 함수
+  -- TEST 37: scale() function
   SELECT results_eq('
     SELECT scale(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -527,7 +527,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 38: sign() 함수
+  -- TEST 38: sign() function
   SELECT results_eq('
     SELECT sign(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -543,7 +543,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 39: sqrt() 함수
+  -- TEST 39: sqrt() function
   SELECT results_eq('
     SELECT sqrt(nb_default) FROM math_func_test_table WHERE nb_default > 0',
     ARRAY[
@@ -554,7 +554,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 40: trim_scale() 함수
+  -- TEST 40: trim_scale() function
   SELECT results_eq('
     SELECT trim_scale(nb_default) FROM math_func_test_table',
     ARRAY[
@@ -570,7 +570,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 41: trunc() 함수
+  -- TEST 41: trunc() function
   SELECT results_eq('
     SELECT trunc(nb_default) FROM math_func_test_table',
     ARRAY[

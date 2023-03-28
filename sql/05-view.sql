@@ -34,7 +34,7 @@ BEGIN;
   -- TEST 1
   SELECT lives_ok('
     SELECT * FROM fvt1',
-    '원격 서버에 생성한 VIEW를 Foreign Table로 조회 검증'
+    'Check SELECT FROM foreign table created on foreign VIEW'
   );
 
   SELECT * FROM finish();

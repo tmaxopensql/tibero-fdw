@@ -12,7 +12,9 @@ BEGIN;
   CREATE USER MAPPING FOR current_user
     SERVER server_name
     OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
-  
+
+  SET COMPUTE_QUERY_ID=false;
+
   CREATE FOREIGN TABLE jft1 (
       c_kor CHAR(100),
       c_eng CHAR(100),
@@ -100,7 +102,7 @@ BEGIN;
   -- TEST 3:
   SELECT lives_ok('SELECT * FROM jft3');
 
-  -- TEST 4: 테이블 2개 (jft1, jft2) JOIN 쿼리 플랜 검증
+  -- TEST 4
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_kor
        FROM jft1 JT1 JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) ORDER BY JT1.c_kor;',
@@ -117,20 +119,22 @@ BEGIN;
       '        Sort Key: jt2.c_kor',
       '        ->  Foreign Scan on public.jft2 jt2',
       '              Output: jt2.c_kor'
-    ]
+    ],
+    'Verify query plan for JOIN multiple foreign table query'
   );
 
-  -- TEST 5: JOIN 쿼리 실행 검증
+  -- TEST 5
   SELECT results_eq('
     SELECT JT1.c_kor, JT2.c_kor
     FROM jft1 JT1 JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
     ORDER BY JT1.c_kor;',
     $$VALUES (
       '가나다라마바사아자차카타파하'::CHAR(100),
-      '가나다라마바사아자차카타파하'::CHAR(100))$$
+      '가나다라마바사아자차카타파하'::CHAR(100))$$,
+    'Verify query results for JOIN multiple foreign table query'
   );
 
-  -- TEST 6: 테이블 3개 (jft1, jft2, jft3) JOIN 쿼리 플랜 검증
+  -- TEST 6
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nc_kor, JT2.nc_kor, JT3.nc_kor
        FROM jft1 JT1 JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor)
@@ -156,10 +160,11 @@ BEGIN;
       '        Sort Key: jt3.nc_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.nc_kor'
-    ]
+    ],
+    'Verify query plan for JOIN multiple foreign table query'
   );
 
-  -- TEST 7: JOIN 쿼리 실행 검증
+  -- TEST 7
   SELECT results_eq('
     SELECT JT1.nc_kor, JT2.nc_kor, JT3.nc_kor
       FROM jft1 JT1 JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor)
@@ -167,10 +172,11 @@ BEGIN;
     $$VALUES (
       '가나다라마바사아자차카타파하'::NCHAR(100),
       '가나다라마바사아자차카타파하'::NCHAR(100),
-      '가나다라마바사아자차카타파하'::NCHAR(100))$$
+      '가나다라마바사아자차카타파하'::NCHAR(100))$$,
+    'Verify query results for JOIN multiple foreign table query'
   );
 
-  -- TEST 8: LEFT OUTER JOIN (jft2, jft3) 쿼리 플랜 검증
+  -- TEST 8
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT2.vc_kor, JT3.vc_kor
        FROM jft2 JT2 LEFT JOIN jft3 JT3 ON (JT2.vc_kor = JT3.vc_kor)
@@ -192,20 +198,22 @@ BEGIN;
       '              Sort Key: jt3.vc_kor',
       '              ->  Foreign Scan on public.jft3 jt3',
       '                    Output: jt3.vc_kor'
-    ]
+    ],
+    'Verify query plan for LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 9: JOIN 쿼리 실행 검증
+  -- TEST 9
   SELECT results_eq('
     SELECT JT2.vc_kor, JT3.vc_kor
       FROM jft2 JT2 LEFT JOIN jft3 JT3 ON (JT2.vc_kor = JT3.vc_kor)
       ORDER BY JT2.vc_kor, JT3.vc_kor;',
     $$VALUES (
       '가나다라마바사아자차카타파하'::VARCHAR(100),
-      '가나다라마바사아자차카타파하'::VARCHAR(100))$$
+      '가나다라마바사아자차카타파하'::VARCHAR(100))$$,
+    'Verify query results for LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 10: LEFT OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 10
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_kor, JT3.vc2_kor 
        FROM jft1 JT1 
@@ -232,10 +240,11 @@ BEGIN;
       '        Sort Key: jt1.vc2_kor',
       '        ->  Foreign Scan on public.jft1 jt1',
       '              Output: jt1.vc2_kor'
-    ]
+    ],
+    'Verify query plan for LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 11: JOIN 쿼리 실행 검증
+  -- TEST 11
   SELECT results_eq('
     SELECT JT1.vc2_kor, JT2.vc2_kor, JT3.vc2_kor
        FROM jft1 JT1
@@ -244,10 +253,11 @@ BEGIN;
     $$VALUES (
       '가나다라마바사아자차카타파하'::VARCHAR(100),
       '가나다라마바사아자차카타파하'::VARCHAR(100),
-      '가나다라마바사아자차카타파하'::VARCHAR(100))$$
+      '가나다라마바사아자차카타파하'::VARCHAR(100))$$,
+    'Verify query results for LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 12: Subquery 포함된 LEFT OUTER JOIN (jft2, jft3) 쿼리 플랜 검증
+  -- TEST 12
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT2.dt, JT3.dt 
        FROM jft2 JT2 
@@ -264,10 +274,11 @@ BEGIN;
       '        ->  Foreign Scan on public.jft3',
       '              Output: jft3.dt',
       '              Filter: (jft3.flt > ''10''::double precision)'
-    ]
+    ],
+    'Verify query plan for LEFT OUTER JOIN multiple foreign table query with subquery'
   );
 
-  -- TEST 13: JOIN 쿼리 실행 검증
+  -- TEST 13
   SELECT results_eq('
     SELECT JT2.dt, JT3.dt
        FROM jft2 JT2
@@ -275,10 +286,11 @@ BEGIN;
        WHERE JT2.dt > ''20220101''',
     $$VALUES (
       '2023-01-01'::DATE,
-      '2023-01-01'::DATE)$$
+      '2023-01-01'::DATE)$$,
+    'Verify query results for LEFT OUTER JOIN multiple foreign table query with subquery'
   );
 
-  -- TEST 14: RIGHT OUTER JOIN (jft1, jft2) 쿼리 플랜 검증
+  -- TEST 14
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.rwid, JT2.rwid 
        FROM jft1 JT1 
@@ -301,7 +313,8 @@ BEGIN;
       '              Sort Key: jt1.rwid',
       '              ->  Foreign Scan on public.jft1 jt1',
       '                    Output: jt1.rwid'
-    ]
+    ],
+    'Verify query plan for RIGHT OUTER JOIN multiple foreign table query'
   );
 
   -- TEST 15: JOIN 쿼리 실행 검증
@@ -312,10 +325,11 @@ BEGIN;
       ORDER BY JT2.rwid, JT1.rwid',
     $$VALUES (
       'AAAArFAAAAAACTFAAA',
-      'AAAArFAAAAAACTFAAA')$$
+      'AAAArFAAAAAACTFAAA')$$,
+    'Verify query results for RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 16: RIGHT OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 16
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_spc, JT2.nvc_kor, JT3.nvc_eng 
       FROM jft2 JT2 
@@ -342,10 +356,11 @@ BEGIN;
       '        Sort Key: jt1.nvc_spc',
       '        ->  Foreign Scan on public.jft1 jt1',
       '              Output: jt1.nvc_spc'
-    ]
+    ],
+    'Verify query plan for RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 17: JOIN 쿼리 실행 검증
+  -- TEST 17
   SELECT results_eq('
     SELECT JT1.nvc_spc, JT2.nvc_kor, JT3.nvc_eng
       FROM jft2 JT2
@@ -354,10 +369,11 @@ BEGIN;
     $$VALUES (
       '!@#$%^&*()<>/\\''',
       '가나다라마바사아자차카타파하',
-      'abcdefghijklmnopqrstuvwxyz')$$
+      'abcdefghijklmnopqrstuvwxyz')$$,
+    'Verify query results for RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 18: FULL OUTER JOIN (jft1, jft2) 쿼리 플랜 검증
+  -- TEST 18
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_spc, JT2.c_spc 
       FROM jft1 JT1 
@@ -375,10 +391,11 @@ BEGIN;
       '              Output: jt2.c_spc, jt2.idts',
       '              ->  Foreign Scan on public.jft2 jt2',
       '                    Output: jt2.c_spc, jt2.idts'
-    ]
+    ],
+    'Verify query plan for FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 19: JOIN 쿼리 실행 검증
+  -- TEST 19
   SELECT results_eq('
     SELECT JT1.c_spc, JT2.c_spc
       FROM jft1 JT1
@@ -387,10 +404,11 @@ BEGIN;
     $$VALUES (
       '!@#$%^&*()<>/\\'''::CHAR(100),
       '!@#$%^&*()<>/\\'''::CHAR(100)
-    )$$
+    )$$,
+    'Verify query results for FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 20: FULL OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 20
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt, JT3.flt 
       FROM jft1 JT1 
@@ -412,10 +430,11 @@ BEGIN;
       '        Output: jt3.flt',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.flt'
-    ]
+    ],
+    'Verify query plan for FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 21: JOIN 쿼리 실행 검증
+  -- TEST 21
   SELECT results_eq('
     SELECT JT1.flt, JT2.flt, JT3.flt
       FROM jft1 JT1
@@ -425,10 +444,11 @@ BEGIN;
       123456.123456789::FLOAT,
       123456.123456789::FLOAT,
       123456.123456789::FLOAT
-    )$$
+    )$$,
+    'Verify query results for FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 22: FULL OUTER JOIN 및 INNER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 22
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.ts, JT2.ts, JT3.ts 
       FROM jft1 JT1 
@@ -456,10 +476,11 @@ BEGIN;
       '        Sort Key: jt3.ts',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.ts'
-    ]
+    ],
+    'Verify query plan for FULL OUTER JOIN with INNER JOIN multiple foreign table query'
   );
 
-  -- TEST 23: JOIN 쿼리 실행 검증
+  -- TEST 23
   SELECT results_eq('
     SELECT JT1.ts, JT2.ts, JT3.ts
       FROM jft1 JT1
@@ -469,10 +490,11 @@ BEGIN;
       TO_TIMESTAMP('2023-01-01 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF6')::TIMESTAMP,
       TO_TIMESTAMP('2023-01-01 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF6')::TIMESTAMP,
       TO_TIMESTAMP('2023-01-01 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF6')::TIMESTAMP
-    )$$
+    )$$,
+    'Verify query results for FULL OUTER JOIN with INNER JOIN multiple foreign table query'
   );
 
-  -- TEST 24: FULL OUTER JOIN + RIGHT OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 24
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng 
       FROM jft1 JT1 
@@ -499,10 +521,11 @@ BEGIN;
       '        Sort Key: jt3.vc_eng',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.vc_eng'
-    ]
+    ],
+    'Verify query plan for FULL OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 25: JOIN 쿼리 실행 검증
+  -- TEST 25
   SELECT results_eq('
     SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng 
       FROM jft1 JT1 
@@ -512,10 +535,11 @@ BEGIN;
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100)
-    )$$
+    )$$,
+    'Verify query results for FULL OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
   ); 
 
-  -- TEST 26: RIGHT OUTER JOIN + FULL OUTER JOIN 쿼리 플랜 검증
+  -- TEST 26
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc 
       FROM jft1 JT1 
@@ -542,10 +566,11 @@ BEGIN;
       '        Sort Key: jt3.vc2_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.vc2_spc, jt3.vc2_kor'
-    ]
+    ],
+    'Verify query plan for RIGHT OUTER JOIN with FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 27: JOIN 쿼리 실행 검증
+  -- TEST 27
   SELECT results_eq('
     SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc FROM jft1 JT1 
       RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor) 
@@ -554,10 +579,11 @@ BEGIN;
       '가나다라마바사아자차카타파하'::VARCHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100),
       '!@#$%^&*()<>/\\'''::VARCHAR(100)
-    )$$
+    )$$,
+    'Verify query results for RIGHT OUTER JOIN with FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 28: FULL OUTER JOIN + LEFT OUTER JOIN 쿼리 플랜 검증
+  -- TEST 28
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc 
       FROM jft1 JT1 
@@ -579,10 +605,11 @@ BEGIN;
       '        Output: jt3.nvc_spc, jt3.nvc_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.nvc_spc, jt3.nvc_kor'
-    ]
+    ],
+    'Verify query plan for FULL OUTER JOIN with LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 29: JOIN 쿼리 실행 검증
+  -- TEST 29
   SELECT results_eq(
     'SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc 
        FROM jft1 JT1 
@@ -592,10 +619,11 @@ BEGIN;
       '가나다라마바사아자차카타파하'::TEXT,
       'abcdefghijklmnopqrstuvwxyz'::TEXT,
       '!@#$%^&*()<>/\\'''::TEXT
-    )$$
+    )$$,
+    'Verify query results for FULL OUTER JOIN with LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 30: LEFT OUTER JOIN + FULL OUTER JOIN 쿼리 플랜 검증
+  -- TEST 30
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc 
       FROM jft1 JT1 
@@ -617,10 +645,11 @@ BEGIN;
       '        Output: jt3.nc_spc, jt3.nc_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.nc_spc, jt3.nc_kor'
-    ]
+    ],
+    'Verify query plan for LEFT OUTER JOIN with FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 31: JOIN 쿼리 실행 검증 
+  -- TEST 31
   SELECT results_eq('
     SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc 
       FROM jft1 JT1 
@@ -630,10 +659,11 @@ BEGIN;
       '가나다라마바사아자차카타파하'::NCHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::NCHAR(100),
       '!@#$%^&*()<>/\\'''::NCHAR(100)
-    )$$
+    )$$,
+    'Verify query results for LEFT OUTER JOIN with FULL OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 32: RIGHT OUTER JOIN + LEFT OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 32
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
       FROM jft1 JT1 
@@ -660,10 +690,11 @@ BEGIN;
       '        Sort Key: jt3.c_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.c_spc, jt3.c_kor'
-    ]
+    ],
+    'Verify query plan for RIGHT OUTER JOIN with LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 33: JOIN 쿼리 실행 검증
+  -- TEST 33
   SELECT results_eq('
     SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
       FROM jft1 JT1 
@@ -673,10 +704,11 @@ BEGIN;
       '가나다라마바사아자차카타파하'::CHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::CHAR(100),
       '!@#$%^&*()<>/\\'''::CHAR(100)
-    )$$
+    )$$,
+    'Verify query results for RIGHT OUTER JOIN with LEFT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 34: LEFT OUTER JOIN + RIGHT OUTER JOIN (jft1, jft2, jft3) 쿼리 플랜 검증
+  -- TEST 34
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
       FROM jft1 JT1 
@@ -703,10 +735,11 @@ BEGIN;
       '        Sort Key: jt3.c_kor',
       '        ->  Foreign Scan on public.jft3 jt3',
       '              Output: jt3.c_spc, jt3.c_kor'
-    ]
+    ],
+    'Verify query plan for LEFT OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 35: JOIN 쿼리 실행 검증
+  -- TEST 35
   SELECT results_eq('
     SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
       FROM jft1 JT1 
@@ -716,10 +749,11 @@ BEGIN;
       '가나다라마바사아자차카타파하'::CHAR(100),
       'abcdefghijklmnopqrstuvwxyz'::CHAR(100),
       '!@#$%^&*()<>/\\'''::CHAR(100)
-    )$$
+    )$$,
+    'Verify query results for LEFT OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
   );
 
-  -- TEST 36: xxxx JOIN xxxx 쿼리 플랜 검증
+  -- TEST 36
   SELECT results_eq('
     EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt 
       FROM jft1 JT1 
@@ -734,10 +768,11 @@ BEGIN;
       '              Output: jt1.c_kor, jt1.c_eng, jt1.c_spc, jt1.nc_kor, jt1.nc_eng, jt1.nc_spc, jt1.vc_kor, jt1.vc_eng, jt1.vc_spc, jt1.vc2_kor, jt1.vc2_eng, jt1.vc2_spc, jt1.nvc_kor, jt1.nvc_eng, jt1.nvc_spc, jt1.rwid, jt1.nm, jt1.flt, jt1.dt, jt1.ts, jt1.tsz, jt1.iytm, jt1.idts',
       '        ->  Foreign Scan on public.jft2 jt2',
       '              Output: jt2.c_kor, jt2.c_eng, jt2.c_spc, jt2.nc_kor, jt2.nc_eng, jt2.nc_spc, jt2.vc_kor, jt2.vc_eng, jt2.vc_spc, jt2.vc2_kor, jt2.vc2_eng, jt2.vc2_spc, jt2.nvc_kor, jt2.nvc_eng, jt2.nvc_spc, jt2.rwid, jt2.nm, jt2.flt, jt2.dt, jt2.ts, jt2.tsz, jt2.iytm, jt2.idts'
-    ]
+    ],
+    'Verify query plan for CROSS JOIN multiple foreign table'
   );
 
-  -- TEST 37: JOIN 쿼리 실행 검증
+  -- TEST 37
   SELECT results_eq('
     SELECT JT1.flt, JT2.flt 
       FROM jft1 JT1 
@@ -746,7 +781,8 @@ BEGIN;
     $$VALUES (
       123456.123456789::FLOAT,
       123456.123456789::FLOAT
-    )$$
+    )$$,
+    'Verify query results for CROSS JOIN multiple foreign table'
   );
 
   -- Finish the tests and clean up.
