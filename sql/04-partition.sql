@@ -19,8 +19,11 @@ BEGIN;
       amounts NUMERIC(10,2)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't_test1');
 
-  -- TEST 1: RANGE(DATE) 조건으로 파티션 된 Foreign Table 조회
-  SELECT lives_ok('SELECT * FROM range_parent_pt');
+  -- TEST 1
+  SELECT lives_ok('
+    SELECT * FROM range_parent_pt',
+    'RANGE(DATE) 조건으로 파티션 된 Foreign Table 조회'
+  );
 
   CREATE FOREIGN TABLE list_parent_pt (
       id INT,
@@ -28,8 +31,11 @@ BEGIN;
       region VARCHAR(20)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't_test2');
 
-  -- TEST 2: LIST(VARCHAR) 조건으로 파티션 된 Foreign Table 조회
-  SELECT lives_ok('SELECT * FROM list_parent_pt');
+  -- TEST 2
+  SELECT lives_ok('
+    SELECT * FROM list_parent_pt',
+    'LIST(VARCHAR) 조건으로 파티션 된 Foreign Table 조회'
+  );
 
   CREATE FOREIGN TABLE hash_parent_pt (
       id INT,
@@ -37,8 +43,11 @@ BEGIN;
       department VARCHAR(20)
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't_test3');
 
-  -- TEST 3: HASH(INT) 조건으로 파티션 된 Foreign Table 조회
-  SELECT lives_ok('SELECT * FROM hash_parent_pt');
+  -- TEST 3
+  SELECT lives_ok('
+    SELECT * FROM hash_parent_pt',
+    'HASH(INT) 조건으로 파티션 된 Foreign Table 조회'
+  );
 
   SELECT * FROM finish();
 ROLLBACK;

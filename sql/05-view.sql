@@ -31,8 +31,11 @@ BEGIN;
       col_interval_ds INTERVAL
   ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'v_test');
 
-  -- TEST 1: 원격 DBMS에 생성된 VIEW Foreign Table로 조회
-  SELECT lives_ok('SELECT * FROM fvt1');
+  -- TEST 1
+  SELECT lives_ok('
+    SELECT * FROM fvt1',
+    '원격 서버에 생성한 VIEW를 Foreign Table로 조회 검증'
+  );
 
   SELECT * FROM finish();
 ROLLBACK;

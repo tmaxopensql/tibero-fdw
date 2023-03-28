@@ -1,12 +1,25 @@
 #!/bin/bash
-TIBERO_HOST="'127.0.0.1'"
-TIBERO_PORT="'8629'"
-TIBERO_USER="'tibero'"
-TIBERO_PASS="'tmax'"
-TIBERO_DB="'tibero'"
+. ./test.conf
 
-POSTGRES_USER="yhjeon"
-POSTGRES_DB="dvdrental"
+if [[ -z ${TIBERO_HOST} ]] || [[ -z ${TIBERO_PORT} ]] || [[ -z ${TIBERO_USER} ]] || [[ -z ${TIBERO_PASS} ]] || [[ -z ${TIBERO_DB} ]];
+then
+  echo "Tibero7 connection parameters are incomplete. Exiting..."
+  exit 1;
+fi
+
+if [ -z ${POSTGRES_USER} ];
+then
+  PG_USROPT="-U ${PGUSER}"
+else
+  PG_USROPT="-U ${POSTGRES_USER}"
+fi
+
+if [ -z ${POSTGRES_DB} ];
+then
+  PG_DBOPT=""
+else
+  PG_DBOPT="-d ${POSTGRES_DB}"
+fi
 
 if [ $# -eq 0 ]
 then
@@ -15,8 +28,7 @@ else
   TARGET="$@"
 fi
 
-export PGPASSWORD="postgres"
-
-pg_prove --set TIBERO_HOST=$TIBERO_HOST --set TIBERO_PORT=$TIBERO_PORT \
+pg_prove --verbose --set TIBERO_HOST=$TIBERO_HOST --set TIBERO_PORT=$TIBERO_PORT \
   --set TIBERO_USER=$TIBERO_USER --set TIBERO_PASS=$TIBERO_PASS --set TIBERO_DB=$TIBERO_DB \
-  -U $POSTGRES_USER -d $POSTGRES_DB --pset tuples_only=1 $TARGET
+  --set PSQLRC=default $PG_USROPT $PG_DBOPT --pset tuples_only=1 $TARGET
+
