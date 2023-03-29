@@ -20,17 +20,10 @@ jobs:
           repository: ${{ github.repository }}
           token: ${{ secrets.git-access-token }}
       
-      - uses: actions/checkout@v2
-        with:
-          repository: 'tmaxopensql/tibero-fdw-dist'
-          token: ${{ secrets.git-access-token }}
-          
       - name: Create release in dist repository
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.git-access-token }}
+        uses: softprops/action-gh-release@v1
         with:
+          repository: 'tmaxopensql/release-automation-test-dist'
+          token: ${{ secrets.git-access-token }}
           tag_name: ${{ steps.get_the_latest_release.outputs.release }}
-          release_name: ${{ steps.get_the_latest_release.outputs.release }}
           body: ${{ steps.get_the_latest_release.outputs.description }}
-          
