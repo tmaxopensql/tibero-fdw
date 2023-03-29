@@ -1,5 +1,3 @@
-# tibero-fdw
-
 Foregin Data Wrapper for Tibero
 ===============================
 
