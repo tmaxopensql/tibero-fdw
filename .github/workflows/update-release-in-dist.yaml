@@ -22,7 +22,7 @@ jobs:
       
       - uses: actions/checkout@v2
         with:
-          repository: 'tmaxopensql.tibero-fdw-dist'
+          repository: 'tmaxopensql/tibero-fdw-dist'
           token: ${{ secrets.git-access-token }}
           
       - name: Create release in dist repository
