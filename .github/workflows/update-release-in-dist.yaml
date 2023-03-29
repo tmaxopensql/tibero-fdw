@@ -23,7 +23,7 @@ jobs:
       - name: Create release in dist repository
         uses: softprops/action-gh-release@v1
         with:
-          repository: 'tmaxopensql/release-automation-test-dist'
+          repository: 'tmaxopensql/tibero-fdw-dist'
           token: ${{ secrets.git-access-token }}
           tag_name: ${{ steps.get_the_latest_release.outputs.release }}
           body: ${{ steps.get_the_latest_release.outputs.description }}
