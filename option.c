@@ -26,6 +26,7 @@ typedef struct TiberoFdwOption
 {
   const char *keyword;
   void (*validate)(DefElem *def);
+
   bool hidden;
 } TiberoFdwOption;
 
@@ -41,6 +42,7 @@ static void validate_dbname_option(DefElem *def);
 static void validate_fetch_size_option(DefElem *def);
 static void validate_username_option(DefElem *def);
 static void validate_password_option(DefElem *def);
+static void validate_owner_name_option(DefElem *def);
 static void validate_table_name_option(DefElem *def);
 static void validate_sleep_on_sig_option(DefElem *def);
 static void validate_use_fb_query_option(DefElem *def);
@@ -90,6 +92,7 @@ static inline void
 validate_foreign_table_options(const List *options)
 {
   const TiberoFdwOption foreign_table_options[] = {
+    {"owner_name", validate_owner_name_option, false},
     {"table_name", validate_table_name_option, false},
     {"fetch_size", validate_fetch_size_option, false},
     {"use_fb_query", validate_use_fb_query_option, true},
@@ -210,6 +213,12 @@ validate_username_option(DefElem *def)
 
 static void
 validate_password_option(DefElem *def)
+{
+  (void) defGetString(def);
+}
+
+static void
+validate_owner_name_option(DefElem *def)
 {
   (void) defGetString(def);
 }
