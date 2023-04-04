@@ -3,7 +3,7 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
-  SELECT plan(24);
+  SELECT plan(27);
 
   /* Tests server options */
   -- TEST 1
@@ -174,6 +174,31 @@ BEGIN;
     'ALTER FOREIGN TABLE foreign_tbl OPTIONS (ADD wrong_option ''wrong option value'')',
      'invalid option "wrong_option"',
     'Add an unknown option to foreign table'
+  );
+
+  /* Options with empty string value */
+  CREATE FOREIGN TABLE test25_tbl (c1 int) SERVER tibero_server
+  OPTIONS (owner_name 'tmax', table_name 'test');
+
+  -- TEST 25
+  SELECT throws_matching(
+    'ALTER FOREIGN TABLE test25_tbl OPTIONS (SET owner_name '''')',
+    '"owner_name" requires non-empty value',
+    'Set an option to empty value'
+  );
+  
+  -- TEST 26
+  SELECT throws_matching(
+    'ALTER FOREIGN TABLE test25_tbl OPTIONS (ADD fetch_size '''')',
+    '"fetch_size" requires non-empty value',
+    'Add an option with empty value'
+  );
+
+  -- TEST 27
+  SELECT throws_matching(
+    'ALTER FOREIGN TABLE test25_tbl OPTIONS (ADD use_fb_query '''')',
+    '"use_fb_query" requires non-empty value',
+    'Add a boolean option with empty value'
   );
 
   -- Finish the tests and clean up.
