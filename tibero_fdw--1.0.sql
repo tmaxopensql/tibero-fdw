@@ -7,5 +7,11 @@ RETURNS fdw_handler
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
+CREATE FUNCTION tibero_fdw_validator(text[], oid)
+RETURNS void
+as 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
 CREATE FOREIGN DATA WRAPPER tibero_fdw
-  HANDLER tibero_fdw_handler;
+  HANDLER tibero_fdw_handler
+  VALIDATOR tibero_fdw_validator;
