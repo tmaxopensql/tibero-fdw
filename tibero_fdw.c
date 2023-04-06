@@ -473,14 +473,13 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 									 (SQLPOINTER)fsstate->fetch_size, 0);
 	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR,
 									 (SQLPOINTER)&fsstate->tuple_cnt, 0);
+	TbSQLExecute(fsstate->tbStmt);
 
 	for (i = 0; i < fsstate->tbStmt->res_col_cnt; i++) {
 		TbColumn *col = fsstate->table->column[i];
 		TbSQLBindCol(fsstate->tbStmt, i + 1, SQL_C_CHAR, (SQLCHAR *)col->data,
 								 col->col_size, col->ind);
 	}
-
-	fsstate->tbStmt->query_executed = false;
 
 	set_sleep_on_sig_off();
 }
@@ -599,10 +598,6 @@ tiberoIterateForeignScan(ForeignScanState *node)
 
 	set_sleep_on_sig_on();
 
-	if (!fsstate->tbStmt->query_executed) {
-		TbSQLExecute(fsstate->tbStmt);
-	}
-
 	if (need_fetch_tuples(fsstate))
 		fetch_tuples(node);
 	result_tts = get_next_tuple(node);
@@ -615,13 +610,9 @@ tiberoIterateForeignScan(ForeignScanState *node)
 static void
 tiberoReScanForeignScan(ForeignScanState *node)
 {
-	TbFdwScanState *fsstate = (TbFdwScanState *) node->fdw_state;
-
 	set_sleep_on_sig_on();
 
-	fsstate->end_of_fetch = false;
-	fsstate->cur_tuple_idx = 0;
-	fsstate->tbStmt->query_executed = false;
+	/* TODO */
 
 	set_sleep_on_sig_off();
 }
