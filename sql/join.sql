@@ -2,7 +2,7 @@
 BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
 
-  SELECT plan(37);
+  SELECT plan(38);
 
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
@@ -783,6 +783,29 @@ BEGIN;
       123456.123456789::FLOAT
     )$$,
     'Verify query results for CROSS JOIN multiple foreign table'
+  );
+
+  CREATE FOREIGN TABLE fst1 (
+      c1 INT
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st1');
+
+  CREATE FOREIGN TABLE fst2 (
+      c1 INT
+  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st2');
+
+  -- TEST 38
+  SELECT results_eq('
+    SELECT * FROM fst1, fst2 where fst1.c1 <= 200;',
+    $$VALUES
+      (100::INT, 10::INT),
+      (100::INT, 20::INT),
+      (100::INT, 30::INT),
+      (100::INT, 40::INT),
+      (200::INT, 10::INT),
+      (200::INT, 20::INT),
+      (200::INT, 30::INT),
+      (200::INT, 40::INT)
+    $$
   );
 
   -- Finish the tests and clean up.

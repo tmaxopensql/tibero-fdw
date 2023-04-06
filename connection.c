@@ -452,6 +452,7 @@ TbSQLExecute(TbStatement *tbStmt)
 	SQLRETURN rc = SQLExecute(tbStmt->hstmt);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
+		tbStmt->query_executed = true;
 	} else {
 		TbFdwReportError(ERROR, ERRCODE_FDW_ERROR,
 										 psprintf("return code (%d)", rc), tbStmt->conn);

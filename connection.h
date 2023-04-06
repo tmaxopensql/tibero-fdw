@@ -48,6 +48,7 @@ typedef struct TbStatement
 	char tsn[32];
 	ConnCacheEntry *conn;
 	SQLSMALLINT res_col_cnt;
+	bool query_executed;
 } TbStatement;
 
 /* {{{ tbcli wrapper **********************************************************/
