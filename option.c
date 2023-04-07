@@ -63,6 +63,27 @@ static inline bool get_bool_value_with_null_check(DefElem *def);
 
 PG_FUNCTION_INFO_V1(tibero_fdw_validator);
 
+/*
+	tibero_fdw_validator is called when there is a change in options with Tibero FDW objects. The
+	first argument is the list of options configured to the object, and the second argument is the
+	identification of the target object (e.g., server, user mapping, foreign table).
+
+	Note that the first argument is not the list of options included in the DDL statement. It is the
+	list of options that are configured in the result of the DDL statement. For example,
+
+		CREATE SERVER tibero_server FOREIGN DATA WRAPPER tibero_fdw
+		OPTIONS (option1 'value1', option2 'value2');
+
+	the statement above passes (option1, value1), (option2, value2) as argument. On the other hand,
+
+		ALTER SERVER tibero_server OPTIONS (DROP option1);
+
+	the statement above passes (option2, value2) as arguement, not (option1, value2). This remark
+	is important in the implementation of checking for required options. Since the passed argument
+	is the result options, we only need to check whether the input options configure the required
+	options or not.
+*/
+
 Datum
 tibero_fdw_validator(PG_FUNCTION_ARGS)
 {
@@ -198,7 +219,6 @@ check_sufficient_input_options(TbFdwOption *registered)
 			const char *delimiter = (error_hint_buf.len > 0) ? ", " : "";
 			appendStringInfo(&error_hint_buf, "%s%s", delimiter, iter->keyword);
 			insufficient = true;
-
 		}
 	}
 
