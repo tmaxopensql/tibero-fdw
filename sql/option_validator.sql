@@ -3,7 +3,7 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
-  SELECT plan(27);
+  SELECT plan(29);
 
   /* Tests server options */
   -- TEST 1
@@ -17,7 +17,7 @@ BEGIN;
   -- TEST 2
   SELECT lives_ok(
     'CREATE SERVER tibero_server FOREIGN DATA WRAPPER tibero_fdw
-     OPTIONS (host ''localhost'', port ''1234'', dbname ''testdb'')',
+     OPTIONS (host ''localhost'', port ''1234'', dbname ''testdb'', fetch_size ''100'')',
      'Create server with valid options for server'
   );
 
@@ -36,7 +36,7 @@ BEGIN;
 
   -- TEST 5
   SELECT lives_ok(
-    'ALTER SERVER tibero_server OPTIONS (DROP host)',
+    'ALTER SERVER tibero_server OPTIONS (DROP fetch_size)',
     'Drop a valid option from server'
   );
 
@@ -49,7 +49,7 @@ BEGIN;
 
   -- TEST 7
   SELECT lives_ok(
-    'ALTER SERVER tibero_server OPTIONS (ADD host ''localhost'')',
+    'ALTER SERVER tibero_server OPTIONS (ADD fetch_size ''100'')',
     'Add a valid option to server'
   );
 
@@ -92,9 +92,10 @@ BEGIN;
   );
 
   -- TEST 13
-  SELECT lives_ok(
+  SELECT throws_matching(
     'ALTER USER MAPPING FOR CURRENT_USER SERVER tibero_server
      OPTIONS (DROP username)',
+    'insufficient options',
     'Drop a valid option from user mapping'
   );
 
@@ -109,7 +110,7 @@ BEGIN;
   -- TEST 15
   SELECT lives_ok(
     'ALTER USER MAPPING FOR CURRENT_USER SERVER tibero_server
-     OPTIONS (ADD username ''tibero'')',
+     OPTIONS (ADD password_required ''true'')',
     'Add a valid option to user mapping'
   );
 
@@ -200,6 +201,26 @@ BEGIN;
     '"use_fb_query" requires non-empty value',
     'Add a boolean option with empty value'
   );
+
+  /* Required options validation */
+  -- TEST 28
+  SELECT throws_matching(
+    'CREATE SERVER tibero_server26 FOREIGN DATA WRAPPER tibero_fdw
+     OPTIONS (host ''localhost'', port ''5432'')',
+    'insufficient options',
+    'Forget to put a required option "dbname"'
+  );
+
+  -- TEST 29
+  CREATE SERVER tibero_server27 FOREIGN DATA WRAPPER tibero_fdw
+  OPTIONS (host 'localhost', port '5432', dbname 'testdb');
+
+  SELECT throws_matching(
+    'ALTER SERVER tibero_server27 OPTIONS (DROP host)',
+    'insufficient options',
+    'Drop a required option "host"'
+  );
+
 
   -- Finish the tests and clean up.
   SELECT * FROM finish();
