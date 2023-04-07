@@ -54,8 +54,9 @@ static void validate_username_option(DefElem *def);
 static void validate_password_option(DefElem *def);
 static void validate_owner_name_option(DefElem *def);
 static void validate_table_name_option(DefElem *def);
-static void validate_sleep_on_sig_option(DefElem *def);
+static void validate_use_sleep_on_sig_option(DefElem *def);
 static void validate_use_fb_query_option(DefElem *def);
+static void validate_keep_connections_option(DefElem *def);
 static void validate_password_required_option(DefElem *def);
 
 static inline char * get_str_value_with_null_check(DefElem *def);
@@ -116,8 +117,9 @@ validate_foreign_server_options(const List *options)
 		TB_FDW_OPTION(port, false, true),
 		TB_FDW_OPTION(dbname, false, true),
 		TB_FDW_OPTION(fetch_size, false, false),
-		TB_FDW_OPTION(sleep_on_sig, true, false),
+		TB_FDW_OPTION(use_sleep_on_sig, true, false),
 		TB_FDW_OPTION(use_fb_query, true, false),
+		TB_FDW_OPTION(keep_connections, true, false),
 		TB_FDW_OPTION_ARRAY_END
 	};
 	validate_options(foreign_server_options, options);
@@ -309,13 +311,19 @@ validate_table_name_option(DefElem *def)
 }
 
 static void
-validate_sleep_on_sig_option(DefElem *def)
+validate_use_sleep_on_sig_option(DefElem *def)
 {
 	(void) get_bool_value_with_null_check(def);
 }
 
 static void
 validate_use_fb_query_option(DefElem *def)
+{
+	(void) get_bool_value_with_null_check(def);
+}
+
+static void
+validate_keep_connections_option(DefElem *def)
 {
 	(void) get_bool_value_with_null_check(def);
 }
