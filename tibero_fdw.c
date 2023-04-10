@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------------
  *
  * tibero_fdw.c
  *			Foreign-data wrapper for remote Tibero servers
@@ -8,7 +8,7 @@
  * IDENTIFICATION
  *			contrib/tibero_fdw/tibero_fdw.c
  *
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------------------
  */
 #include "postgres.h"
 
@@ -17,7 +17,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "access/xact.h"								/* IsolationUsesXactSnapshot					*/
+#include "access/xact.h"													/* IsolationUsesXactSnapshot										*/
 #include "catalog/pg_class.h"
 #include "catalog/pg_opfamily.h"
 #include "commands/defrem.h"
@@ -49,14 +49,14 @@
 #include "utils/rel.h"
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
-#include "utils/syscache.h"							/* TYPEOID														*/
+#include "utils/syscache.h"												/* TYPEOID																			*/
 
 #include "tibero_fdw.h"
 #include "connection.h"
 
-/* {{{ global variables *******************************************************/
+/* {{{ global variables ***************************************************************************/
 extern bool is_signal_handlers_registered;
-/******************************************************* global variables }}} */
+/*************************************************************************** global variables }}} */
 
 PG_MODULE_MAGIC;
 
@@ -123,29 +123,25 @@ typedef struct TbFdwScanState
 
 PG_FUNCTION_INFO_V1(tibero_fdw_handler);
 
-/* {{{ FDW callback routines **************************************************/
-static void tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
-																		Oid foreigntableid);
-static void tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel,
-																	Oid foreigntableid);
+/* {{{ FDW callback routines **********************************************************************/
+static void tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid);
+static void tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid);
 static ForeignScan *tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel,
-																				 Oid foreigntableid, ForeignPath *best_path,
-																				 List *tlist, List *scan_clauses,
-																				 Plan *outer_plan);
+																				 Oid foreigntableid, ForeignPath *best_path, List *tlist,
+																				 List *scan_clauses, Plan *outer_plan);
 static void tiberoBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *tiberoIterateForeignScan(ForeignScanState *node);
 static void tiberoReScanForeignScan(ForeignScanState *node);
 static void tiberoEndForeignScan(ForeignScanState *node);
-static void tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel,
-																			RelOptInfo *outerrel, RelOptInfo *innerrel,
-																			JoinType jointype, JoinPathExtraData *extra);
-/************************************************** FDW callback routines }}} */
+static void tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
+																			RelOptInfo *innerrel, JoinType jointype,
+																			JoinPathExtraData *extra);
+/********************************************************************** FDW callback routines }}} */
 
-/* {{{ Helper functions *******************************************************/
-static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel,
-														JoinType jointype, RelOptInfo *outerrel,
-														RelOptInfo *innerrel, JoinPathExtraData *extra);
-/******************************************************* Helper functions }}} */
+/* {{{ Helper functions ***************************************************************************/
+static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
+														RelOptInfo *outerrel, RelOptInfo *innerrel, JoinPathExtraData *extra);
+/*************************************************************************** Helper functions }}} */
 
 Datum
 tibero_fdw_handler(PG_FUNCTION_ARGS)
@@ -253,21 +249,18 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 		fpinfo->user = NULL;
 	}
 
-	classify_conditions(root, baserel, baserel->baserestrictinfo,
-											&fpinfo->remote_conds, &fpinfo->local_conds);
+	classify_conditions(root, baserel, baserel->baserestrictinfo, &fpinfo->remote_conds,
+											&fpinfo->local_conds);
 
 	fpinfo->attrs_used = NULL;
-	pull_varattnos((Node *) baserel->reltarget->exprs, baserel->relid,
-								 &fpinfo->attrs_used);
+	pull_varattnos((Node *) baserel->reltarget->exprs, baserel->relid, &fpinfo->attrs_used);
 	foreach(lc, fpinfo->local_conds) {
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-		pull_varattnos((Node *) rinfo->clause, baserel->relid,
-									 &fpinfo->attrs_used);
+		pull_varattnos((Node *) rinfo->clause, baserel->relid, &fpinfo->attrs_used);
 	}
 
-	fpinfo->local_conds_sel = clauselist_selectivity(root, fpinfo->local_conds,
-																									 baserel->relid, JOIN_INNER,
-																									 NULL);
+	fpinfo->local_conds_sel = clauselist_selectivity(root, fpinfo->local_conds, baserel->relid,
+																									 JOIN_INNER, NULL);
 	cost_qual_eval(&fpinfo->local_conds_cost, fpinfo->local_conds, root);
 
 	if (fpinfo->use_remote_estimate) {
@@ -275,8 +268,8 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 	} else {
 		if (baserel->tuples < 0) {
 			baserel->pages = 10;
-			baserel->tuples = (10 * BLCKSZ) / (baserel->reltarget->width +
-																				 MAXALIGN(SizeofHeapTupleHeader));
+			baserel->tuples = (10 * BLCKSZ) /
+												(baserel->reltarget->width + MAXALIGN(SizeofHeapTupleHeader));
 		}
 		set_baserel_size_estimates(root, baserel);
 	}
@@ -294,10 +287,8 @@ tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid
 	set_sleep_on_sig_on();
 
 	add_path(baserel,
-					 (Path *) create_foreignscan_path(root, baserel, NULL, fpinfo->rows,
-																						fpinfo->startup_cost,
-																						fpinfo->total_cost, NIL,
-																						baserel->lateral_relids, NULL,
+					 (Path *) create_foreignscan_path(root, baserel, NULL, fpinfo->rows, fpinfo->startup_cost,
+																						fpinfo->total_cost, NIL, baserel->lateral_relids, NULL,
 																						NIL));
 
 	if (fpinfo->use_remote_estimate) {
@@ -308,9 +299,8 @@ tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid
 }
 
 static ForeignScan *
-tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel,
-										 Oid foreigntableid, ForeignPath *best_path, List *tlist,
-										 List *scan_clauses, Plan *outer_plan)
+tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel, Oid foreigntableid,
+										 ForeignPath *best_path, List *tlist, List *scan_clauses, Plan *outer_plan)
 {
 	TbFdwRelationInfo *fpinfo = (TbFdwRelationInfo *) foreignrel->fdw_private;
 	Index scan_relid;
@@ -330,10 +320,8 @@ tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel,
 	set_sleep_on_sig_on();
 
 	if (best_path->fdw_private) {
-		has_final_sort = intVal(list_nth(best_path->fdw_private,
-																		 FdwPathPrivateHasFinalSort));
-		has_limit = intVal(list_nth(best_path->fdw_private,
-																FdwPathPrivateHasLimit));
+		has_final_sort = intVal(list_nth(best_path->fdw_private, FdwPathPrivateHasFinalSort));
+		has_limit = intVal(list_nth(best_path->fdw_private, FdwPathPrivateHasLimit));
 	}
 
 	if (IS_SIMPLE_REL(foreignrel)) {
@@ -362,21 +350,17 @@ tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel,
 	}
 
 	initStringInfo(&sql);
-	deparse_select_stmt_for_rel(&sql, root, foreignrel, fdw_scan_tlist,
-															remote_exprs, best_path->path.pathkeys,
-															has_final_sort, has_limit, false,
+	deparse_select_stmt_for_rel(&sql, root, foreignrel, fdw_scan_tlist, remote_exprs,
+															best_path->path.pathkeys, has_final_sort, has_limit, false,
 															&retrieved_attrs, &params_list, fpinfo->use_fb_query);
 
-	fdw_private = list_make4(makeString(sql.data),
-													 retrieved_attrs,
-													 makeInteger(fpinfo->fetch_size),
+	fdw_private = list_make4(makeString(sql.data), retrieved_attrs, makeInteger(fpinfo->fetch_size),
 													 makeInteger(fpinfo->use_fb_query));
 
 	Assert(IS_SIMPLE_REL(foreignrel));
 
-	result_foreign_scan = make_foreignscan(tlist, local_exprs, scan_relid, params_list,
-																	fdw_private, fdw_scan_tlist, fdw_recheck_quals,
-																	outer_plan);
+	result_foreign_scan = make_foreignscan(tlist, local_exprs, scan_relid, params_list, fdw_private,
+																				 fdw_scan_tlist, fdw_recheck_quals, outer_plan);
 
 	set_sleep_on_sig_off();
 
@@ -414,24 +398,18 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	table = GetForeignTable(rte->relid);
 	user = GetUserMapping(userid, table->serverid);
 
-	fsstate->query = (unsigned char *) strVal(list_nth(fsplan->fdw_private,
-																	 									 FdwScanPrivateSelectSql));
-	fsstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
-												 											 FdwScanPrivateRetrievedAttrs);
-	fsstate->fetch_size = intVal(list_nth(fsplan->fdw_private,
-																				FdwScanPrivateFetchSize));
-	fsstate->use_fb_query = intVal(list_nth(fsplan->fdw_private,
-																					FdwScanPrivateUseFbQuery));
+	fsstate->query = (unsigned char *) strVal(list_nth(fsplan->fdw_private, FdwScanPrivateSelectSql));
+	fsstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private, FdwScanPrivateRetrievedAttrs);
+	fsstate->fetch_size = intVal(list_nth(fsplan->fdw_private, FdwScanPrivateFetchSize));
+	fsstate->use_fb_query = intVal(list_nth(fsplan->fdw_private, FdwScanPrivateUseFbQuery));
 
 	fsstate->tuple_cnt = TB_FDW_INIT_TUPLE_CNT;
 	fsstate->cur_tuple_idx = 0;
 	fsstate->end_of_fetch = false;
 
-	fsstate->batch_ctx = AllocSetContextCreate(estate->es_query_cxt,
-																						 "tibero_fdw tuple data",
+	fsstate->batch_ctx = AllocSetContextCreate(estate->es_query_cxt, "tibero_fdw tuple data",
 																						 ALLOCSET_DEFAULT_SIZES);
-	fsstate->temp_ctx = AllocSetContextCreate(estate->es_query_cxt,
-																						"tibero_fdw temporary data",
+	fsstate->temp_ctx = AllocSetContextCreate(estate->es_query_cxt, "tibero_fdw temporary data",
 																						ALLOCSET_SMALL_SIZES);
 
 	fsstate->rel = node->ss.ss_currentRelation;
@@ -440,8 +418,7 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
 
 	fsstate->table = (TbTable *) palloc0(sizeof(TbTable));
-	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) *
-																								 fsstate->tupdesc->natts);
+	fsstate->table->column = (TbColumn **) palloc0(sizeof(TbColumn *) * fsstate->tupdesc->natts);
 	for (i = 0; i < fsstate->tupdesc->natts; i++) {
 		fsstate->table->column[i] = (TbColumn *) palloc0(sizeof(TbColumn));
 	}
@@ -454,9 +431,9 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 
 	for (i = 0; i < fsstate->tbStmt->res_col_cnt; i++) {
 		TbColumn *col = fsstate->table->column[i];
-		TbSQLDescribeCol(fsstate->tbStmt, (SQLSMALLINT)i + 1, col->col_name,
-										 sizeof(col->col_name), &col->col_name_len, &col->data_type,
-										 &col->col_size, &col->scale, &col->nullable);
+		TbSQLDescribeCol(fsstate->tbStmt, (SQLSMALLINT)i + 1, col->col_name, sizeof(col->col_name),
+										 &col->col_name_len, &col->data_type, &col->col_size, &col->scale,
+										 &col->nullable);
 
 		col->data = palloc0(sizeof(unsigned char) * col->col_size * fsstate->fetch_size);
 		col->ind = palloc0(sizeof(SQLLEN) * fsstate->fetch_size);
@@ -464,21 +441,17 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 
 	if (fsstate->use_fb_query && !IsolationUsesXactSnapshot()) {
 		ind = SQL_NTS;
-		TbSQLBindParameter(fsstate->tbStmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
-											 SQL_NUMERIC, 0, 0, fsstate->tbStmt->conn->tsn,
-											 sizeof(fsstate->tbStmt->conn->tsn), &ind);
+		TbSQLBindParameter(fsstate->tbStmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_NUMERIC, 0, 0,
+											 fsstate->tbStmt->conn->tsn, sizeof(fsstate->tbStmt->conn->tsn), &ind);
 	}
 
-	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE,
-									 (SQLPOINTER)fsstate->fetch_size, 0);
-	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR,
-									 (SQLPOINTER)&fsstate->tuple_cnt, 0);
+	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)fsstate->fetch_size, 0);
+	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROWS_FETCHED_PTR, (SQLPOINTER)&fsstate->tuple_cnt, 0);
 	TbSQLExecute(fsstate->tbStmt);
 
 	for (i = 0; i < fsstate->tbStmt->res_col_cnt; i++) {
 		TbColumn *col = fsstate->table->column[i];
-		TbSQLBindCol(fsstate->tbStmt, i + 1, SQL_C_CHAR, (SQLCHAR *)col->data,
-								 col->col_size, col->ind);
+		TbSQLBindCol(fsstate->tbStmt, i + 1, SQL_C_CHAR, (SQLCHAR *)col->data, col->col_size, col->ind);
 	}
 
 	set_sleep_on_sig_off();
@@ -566,8 +539,7 @@ make_tuples(ForeignScanState *node)
 				dvalues[attnum] = PointerGetDatum(NULL);
 			} else {
 				nulls[attnum] = false;
-				dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod,
-																							 fsstate->table->column[attid], i);
+				dvalues[attnum] = tibero_convert_to_pg(pgtype, pgtypmod, fsstate->table->column[attid], i);
 			}
 			attid++;
 		}
@@ -633,18 +605,16 @@ tiberoEndForeignScan(ForeignScanState *node)
 }
 
 static bool
-foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
-								RelOptInfo *outerrel, RelOptInfo *innerrel,
-								JoinPathExtraData *extra)
+foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype, RelOptInfo *outerrel,
+								RelOptInfo *innerrel, JoinPathExtraData *extra)
 {
 	/* TODO Implementation */
 	return false;
 }
 
 static void
-tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel,
-													RelOptInfo *outerrel, RelOptInfo *innerrel,
-													JoinType jointype, JoinPathExtraData *extra)
+tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
+													RelOptInfo *innerrel, JoinType jointype, JoinPathExtraData *extra)
 {
 	set_sleep_on_sig_on();
 
