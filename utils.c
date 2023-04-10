@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------------
  *
  * utils.c
  *			Utility functions for tibero_fdw
@@ -8,14 +8,14 @@
  * IDENTIFICATION
  *			contrib/tibero_fdw/utils.c
  *
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------------------
  */
-#include <unistd.h>                     /* getpid                             */
+#include <unistd.h>																/* getpid																				*/
 #include "postgres.h"
-#include "port.h"                       /* pqsigfunc                          */
-#include "libpq/pqsignal.h"             /* pqsignal                           */
+#include "port.h"																	/* pqsigfunc																		*/
+#include "libpq/pqsignal.h"												/* pqsignal																			*/
 
-/* {{{ global variables *******************************************************/
+/* {{{ global variables ***************************************************************************/
 
 /* TODO PG_SIGNAL_COUNT */
 pqsigfunc prev_sigsegv_handler;
@@ -25,7 +25,7 @@ pqsigfunc prev_sigfpe_handler;
 
 bool is_signal_handlers_registered = false;
 bool use_sleep_on_sig = false;
-/******************************************************* global variables }}} */
+/*************************************************************************** global variables }}} */
 
 void register_signal_handlers(void);
 static void sleep_on_sig(int signo);
@@ -105,8 +105,7 @@ sleep_on_sig(int signo)
 	if (!use_sleep_on_sig) return;
 
 	ereport(WARNING, errcode(ERRCODE_WARNING),
-					errmsg("*** RECEIVED signal %d (PID=%d)\n\nWAITING SLEEP ON SIGNAL\n",
-								 signo, getpid()));
+					errmsg("*** RECEIVED signal %d (PID=%d)\n\nWAITING SLEEP ON SIGNAL\n", signo, getpid()));
 
 	while (use_sleep_on_sig) {
 		pg_usleep(100000);

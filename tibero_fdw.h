@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------------
  *
  * tibero_fdw.h
  *			Foreign-data wrapper for remote Tibero servers
@@ -8,14 +8,14 @@
  * IDENTIFICATION
  *			contrib/tibero_fdw/tibero_fdw.h
  *
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------------------
  */
 #ifndef TIBERO_FDW_H
 #define TIBERO_FDW_H
 
-#include "foreign/foreign.h"						/* ForeignServer, ForeignTable				*/
-#include "lib/stringinfo.h"						  /* StringInfo                         */
-#include "nodes/pathnodes.h"						/* PlannerInfo, RelOptInfo						*/
+#include "foreign/foreign.h"											/* ForeignServer, ForeignTable									*/
+#include "lib/stringinfo.h"						  					/* StringInfo                         					*/
+#include "nodes/pathnodes.h"											/* PlannerInfo, RelOptInfo											*/
 
 #include "sqlcli.h"
 #include "sqlcli_types.h"
@@ -58,14 +58,12 @@ typedef struct TbFdwRelationInfo
 } TbFdwRelationInfo;
 
 /* in deparse.c */
-extern void classify_conditions(PlannerInfo *root, RelOptInfo *baserel,
-																List *input_conds, List **remote_conds,
-																List **local_conds);
+extern void classify_conditions(PlannerInfo *root, RelOptInfo *baserel, List *input_conds,
+																List **remote_conds, List **local_conds);
 extern bool is_foreign_expr(PlannerInfo *root, RelOptInfo *baserel, Expr *expr);
-extern void deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root,
-																				RelOptInfo *rel, List *tlist, List *remote_conds,
-																				List *pathkeys, bool has_final_sort,
-																				bool has_limit, bool is_subquery,
+extern void deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
+																				List *tlist, List *remote_conds, List *pathkeys,
+																				bool has_final_sort, bool has_limit, bool is_subquery,
 																				List **retrieved_attrs, List **params_list,
 																				bool use_fb_query);
 
