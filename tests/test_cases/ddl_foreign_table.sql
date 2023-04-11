@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE ft1 (
       c0 int,
@@ -22,7 +22,7 @@ BEGIN;
       c5 timestamp,
       c6 varchar(10),
       c7 char(10) default 'opensql'
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER);
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER');
 
   -- TEST 1: Check error is thrown when table_name option is not given when executing CREATE FOREIGN TABLE command
   SELECT throws_ok('SELECT * FROM ft1');
@@ -64,7 +64,7 @@ BEGIN;
       c5 timestamp,
       c6 varchar(10),
       c7 char(10) default 'opensql'
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'dummy_table');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'dummy_table');
 
   -- TEST 4: Check error is thrown when invalid table_name option is given when executing CREATE FOREIGN TABLE command
   SELECT throws_ok('SELECT * FROM ft4');
@@ -78,7 +78,7 @@ BEGIN;
       c5 timestamp,
       c6 varchar(10),
       c7 char(10) default 'opensql'
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'ft_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'ft_test');
 
   -- TEST 5
   SELECT lives_ok(

@@ -7,15 +7,15 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE just_conn_test_table (
     test    char(50)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'just_conn_test_table');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'just_conn_test_table');
 
   CREATE FOREIGN TABLE charset_check (
       characterset_name         char(50),
@@ -49,30 +49,30 @@ BEGIN;
 
   -- TEST 5: Check error is thrown when host and port options are not given
   ALTER SERVER server_name OPTIONS (DROP host);
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
+  ALTER SERVER server_name OPTIONS (ADD dbname :'TIBERO_DB');
   SELECT throws_ok('SELECT * FROM just_conn_test_table;');
    
   -- TEST 6: Check error is thrown when host and dbname options are not given
   ALTER SERVER server_name OPTIONS (DROP dbname);
-  ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
+  ALTER SERVER server_name OPTIONS (ADD port :'TIBERO_PORT');
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
   -- TEST 7: Check error is thrown when host option is not given
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
+  ALTER SERVER server_name OPTIONS (ADD dbname :'TIBERO_DB');
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
   -- TEST 8: Check error is thrown when port option is not given
   ALTER SERVER server_name OPTIONS (DROP port);
-  ALTER SERVER server_name OPTIONS (ADD host :TIBERO_HOST);
+  ALTER SERVER server_name OPTIONS (ADD host :'TIBERO_HOST');
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
   -- TEST 9: Check error is thrown when dbname option is not given
   ALTER SERVER server_name OPTIONS (DROP dbname);
-  ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
+  ALTER SERVER server_name OPTIONS (ADD port :'TIBERO_PORT');
   SELECT throws_ok('SELECT * FROM just_conn_test_table');
 
   -- TEST 10
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
+  ALTER SERVER server_name OPTIONS (ADD dbname :'TIBERO_DB');
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
     'Check the connection works again when the valid host, port, dbname options are given'
@@ -86,7 +86,7 @@ BEGIN;
 
   -- TEST 12: Check error is thrown when password option is not given
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (ADD username :TIBERO_USER);
+    OPTIONS (ADD username :'TIBERO_USER');
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
     OPTIONS (DROP password);
   SELECT throws_ok('
@@ -94,7 +94,7 @@ BEGIN;
 
   -- TEST 13
   ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (ADD password :TIBERO_PASS);
+    OPTIONS (ADD password :'TIBERO_PASS');
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
     'Check the connection works again when the valid username, password options are given'

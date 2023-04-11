@@ -187,7 +187,7 @@ BEGIN;
     '"owner_name" requires non-empty value',
     'Set an option to empty value'
   );
-  
+
   -- TEST 26
   SELECT throws_matching(
     'ALTER FOREIGN TABLE test25_tbl OPTIONS (ADD fetch_size '''')',

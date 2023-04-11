@@ -7,13 +7,13 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
-  CREATE FOREIGN TABLE syn_table(
+  CREATE FOREIGN TABLE fvt1(
       col_char CHAR(10),
       col_varchar VARCHAR(20),
       col_varchar2 VARCHAR(20),
@@ -29,12 +29,12 @@ BEGIN;
       col_timestamp_tz TIMESTAMP WITH TIME ZONE,
       col_interval_ym INTERVAL,
       col_interval_ds INTERVAL
-  ) SERVER server_name OPTIONS ( owner_name :TIBERO_USER, table_name 'ex_syn');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'v_test');
 
   -- TEST 1
-  SELECT lives_ok(
-    'SELECT * FROM syn_table',
-    'Check SELECT FROM foreign table created on foreign SYNONYM'
+  SELECT lives_ok('
+    SELECT * FROM fvt1',
+    'Check SELECT FROM foreign table created on foreign VIEW'
   );
 
   SELECT * FROM finish();

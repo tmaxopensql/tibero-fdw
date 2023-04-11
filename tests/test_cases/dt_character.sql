@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE ft8 (
       c_kor CHAR(100),
@@ -26,8 +26,8 @@ BEGIN;
       nc_kor_full NCHAR(2000),
       nc_eng_full NCHAR(2000),
       nc_spc_full NCHAR(2000)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
-  
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
+
   -- TEST 1
   SELECT is(
     (SELECT c_kor FROM ft8),
@@ -48,14 +48,14 @@ BEGIN;
     '!@#$%^&*()<>/\\''',
     'Check SELECT special characters'
   );
-  
+
   -- TEST 4
   SELECT row_eq(
     $$SELECT * FROM ft8 LIMIT 1$$,
-    ROW('가'::char, 'a'::char, '!'::char, 
+    ROW('가'::char, 'a'::char, '!'::char,
       '가나다라마바사아자차카타파하'::char(2000),
-      'abcdefghijklmnopqrstuvwxyz'::char(2000), 
-      '!@#$%^&*()<>/\\'''::char(2000), 
+      'abcdefghijklmnopqrstuvwxyz'::char(2000),
+      '!@#$%^&*()<>/\\'''::char(2000),
       '가'::char, 'a'::char, '!'::char,
       '가나다라마바사아자차카타파하'::char(2000),
       'abcdefghijklmnopqrstuvwxyz'::char(2000),
@@ -76,7 +76,7 @@ BEGIN;
       nc_kor_full NCHAR,
       nc_eng_full NCHAR,
       nc_spc_full NCHAR
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 5
   SELECT throws_ok(
@@ -107,7 +107,7 @@ BEGIN;
       vc2_kor_full VARCHAR(65532),
       vc2_eng_full VARCHAR(65532),
       vc2_spc_full VARCHAR(65532)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 7
   SELECT row_eq(
@@ -136,7 +136,7 @@ BEGIN;
       vc2_kor_full VARCHAR(1),
       vc2_eng_full VARCHAR(1),
       vc2_spc_full VARCHAR(1)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 8
   SELECT throws_ok(
@@ -175,7 +175,7 @@ BEGIN;
       nvc2_kor_full TEXT,
       nvc2_eng_full TEXT,
       nvc2_spc_full TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 11
   SELECT row_eq(
@@ -204,7 +204,7 @@ BEGIN;
       nvc2_kor_full CHAR(1),
       nvc2_eng_full CHAR(1),
       nvc2_spc_full CHAR(1)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 12
   SELECT throws_ok(
@@ -227,7 +227,7 @@ BEGIN;
       nvc2_kor_full VARCHAR(1),
       nvc2_eng_full VARCHAR(1),
       nvc2_spc_full VARCHAR(1)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 13
   SELECT throws_ok(
@@ -239,7 +239,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE ft11 (
       rwid TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 14
   SELECT is(

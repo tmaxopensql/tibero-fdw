@@ -23,8 +23,8 @@ BEGIN;
   );
 
   -- TEST 4
-  SELECT has_extension('public', 
-    'tibero_fdw', 
+  SELECT has_extension('public',
+    'tibero_fdw',
     'Check the extension is correctly registered in pg_extension table');
 
   -- Finish the tests and clean up.

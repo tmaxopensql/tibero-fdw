@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   SET COMPUTE_QUERY_ID=false;
 
@@ -39,7 +39,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   CREATE FOREIGN TABLE jft2 (
       c_kor CHAR(100),
@@ -65,7 +65,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   CREATE FOREIGN TABLE jft3 (
       c_kor CHAR(100),
@@ -91,7 +91,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   -- TEST 1:
   SELECT lives_ok('SELECT * FROM jft1');
@@ -106,7 +106,7 @@ BEGIN;
   SELECT results_eq(
     'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_kor
        FROM jft1 JT1 JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) ORDER BY JT1.c_kor;',
-    ARRAY[ 'Merge Join', 
+    ARRAY[ 'Merge Join',
       '  Output: jt1.c_kor, jt2.c_kor',
       '  Merge Cond: (jt1.c_kor = jt2.c_kor)',
       '  ->  Sort',
@@ -215,9 +215,9 @@ BEGIN;
 
   -- TEST 10
   SELECT results_eq(
-    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_kor, JT3.vc2_kor 
-       FROM jft1 JT1 
-         LEFT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor) 
+    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_kor, JT3.vc2_kor
+       FROM jft1 JT1
+         LEFT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor)
          LEFT JOIN jft3 JT3 ON (JT2.vc2_kor = JT3.vc2_kor);',
     ARRAY[ 'Merge Right Join',
       '  Output: jt1.vc2_kor, jt2.vc2_kor, jt3.vc2_kor',
@@ -259,9 +259,9 @@ BEGIN;
 
   -- TEST 12
   SELECT results_eq(
-    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT2.dt, JT3.dt 
-       FROM jft2 JT2 
-         LEFT JOIN (SELECT * FROM jft3 WHERE flt > 10) JT3 ON (JT2.dt = JT3.dt) 
+    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT2.dt, JT3.dt
+       FROM jft2 JT2
+         LEFT JOIN (SELECT * FROM jft3 WHERE flt > 10) JT3 ON (JT2.dt = JT3.dt)
        WHERE JT2.dt > ''20220101''',
     ARRAY['Hash Left Join',
       '  Output: jt2.dt, jft3.dt',
@@ -292,9 +292,9 @@ BEGIN;
 
   -- TEST 14
   SELECT results_eq(
-    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.rwid, JT2.rwid 
-       FROM jft1 JT1 
-         RIGHT JOIN jft2 JT2 ON (JT1.rwid = JT2.rwid) 
+    'EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.rwid, JT2.rwid
+       FROM jft1 JT1
+         RIGHT JOIN jft2 JT2 ON (JT1.rwid = JT2.rwid)
        ORDER BY JT2.rwid, JT1.rwid',
     ARRAY['Incremental Sort',
       '  Output: jt1.rwid, jt2.rwid',
@@ -331,9 +331,9 @@ BEGIN;
 
   -- TEST 16
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_spc, JT2.nvc_kor, JT3.nvc_eng 
-      FROM jft2 JT2 
-        RIGHT JOIN jft3 JT3 ON (JT2.nvc_spc = JT3.nvc_spc) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_spc, JT2.nvc_kor, JT3.nvc_eng
+      FROM jft2 JT2
+        RIGHT JOIN jft3 JT3 ON (JT2.nvc_spc = JT3.nvc_spc)
         RIGHT JOIN jft1 JT1 ON (JT3.nvc_spc = JT1.nvc_spc)',
     ARRAY['Merge Right Join',
       '  Output: jt1.nvc_spc, jt2.nvc_kor, jt3.nvc_eng',
@@ -375,9 +375,9 @@ BEGIN;
 
   -- TEST 18
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_spc, JT2.c_spc 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.idts = JT2.idts) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_spc, JT2.c_spc
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.idts = JT2.idts)
       ORDER BY JT1.c_spc, JT2.c_spc',
     ARRAY['Sort',
       '  Output: jt1.c_spc, jt2.c_spc',
@@ -410,9 +410,9 @@ BEGIN;
 
   -- TEST 20
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt, JT3.flt 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.flt = JT2.flt) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt, JT3.flt
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.flt = JT2.flt)
         FULL JOIN jft3 JT3 ON (JT2.flt = JT3.flt)',
     ARRAY['Hash Full Join',
       '  Output: jt1.flt, jt2.flt, jt3.flt',
@@ -450,9 +450,9 @@ BEGIN;
 
   -- TEST 22
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.ts, JT2.ts, JT3.ts 
-      FROM jft1 JT1 
-        INNER JOIN jft2 JT2 ON (JT1.ts = JT2.ts and JT1.flt > 1) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.ts, JT2.ts, JT3.ts
+      FROM jft1 JT1
+        INNER JOIN jft2 JT2 ON (JT1.ts = JT2.ts and JT1.flt > 1)
         FULL JOIN jft3 JT3 ON (JT2.ts = JT3.ts)',
     ARRAY['Merge Full Join',
       '  Output: jt1.ts, jt2.ts, jt3.ts',
@@ -496,9 +496,9 @@ BEGIN;
 
   -- TEST 24
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng)
         RIGHT JOIN jft3 JT3 ON (JT2.vc_eng = JT3.vc_eng)',
     ARRAY['Merge Right Join',
       '  Output: jt1.vc_eng, jt2.vc_eng, jt3.vc_eng',
@@ -527,9 +527,9 @@ BEGIN;
 
   -- TEST 25
   SELECT results_eq('
-    SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng) 
+    SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng)
         RIGHT JOIN jft3 JT3 ON (JT2.vc_eng = JT3.vc_eng)',
     $$VALUES (
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100),
@@ -537,13 +537,13 @@ BEGIN;
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100)
     )$$,
     'Verify query results for FULL OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
-  ); 
+  );
 
   -- TEST 26
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc 
-      FROM jft1 JT1 
-        RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc
+      FROM jft1 JT1
+        RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor)
         FULL JOIN jft3 JT3 ON (JT2.vc2_kor = JT3.vc2_kor)',
     ARRAY['Merge Full Join',
       '  Output: jt1.vc2_kor, jt2.vc2_eng, jt3.vc2_spc',
@@ -572,8 +572,8 @@ BEGIN;
 
   -- TEST 27
   SELECT results_eq('
-    SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc FROM jft1 JT1 
-      RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor) 
+    SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc FROM jft1 JT1
+      RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor)
       FULL JOIN jft3 JT3 ON (JT2.vc2_kor = JT3.vc2_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::VARCHAR(100),
@@ -585,9 +585,9 @@ BEGIN;
 
   -- TEST 28
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor)
         LEFT JOIN jft3 JT3 ON (JT2.nvc_kor = JT3.nvc_kor)',
     ARRAY['Hash Left Join',
       '  Output: jt1.nvc_kor, jt2.nvc_eng, jt3.nvc_spc',
@@ -611,9 +611,9 @@ BEGIN;
 
   -- TEST 29
   SELECT results_eq(
-    'SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc 
-       FROM jft1 JT1 
-         FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor) 
+    'SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc
+       FROM jft1 JT1
+         FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor)
          LEFT JOIN jft3 JT3 ON (JT2.nvc_kor = JT3.nvc_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::TEXT,
@@ -625,9 +625,9 @@ BEGIN;
 
   -- TEST 30
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor)
         FULL JOIN jft3 JT3 ON (JT2.nc_kor = JT3.nc_kor)',
     ARRAY['Hash Full Join',
       '  Output: jt1.nc_kor, jt2.nc_eng, jt3.nc_spc',
@@ -651,9 +651,9 @@ BEGIN;
 
   -- TEST 31
   SELECT results_eq('
-    SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor) 
+    SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor)
         FULL JOIN jft3 JT3 ON (JT2.nc_kor = JT3.nc_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::NCHAR(100),
@@ -665,9 +665,9 @@ BEGIN;
 
   -- TEST 32
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         LEFT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     ARRAY['Merge Left Join',
       '  Output: jt1.c_kor, jt2.c_eng, jt3.c_spc',
@@ -696,9 +696,9 @@ BEGIN;
 
   -- TEST 33
   SELECT results_eq('
-    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         LEFT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::CHAR(100),
@@ -710,9 +710,9 @@ BEGIN;
 
   -- TEST 34
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         RIGHT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     ARRAY['Merge Right Join',
       '  Output: jt1.c_kor, jt2.c_eng, jt3.c_spc',
@@ -741,9 +741,9 @@ BEGIN;
 
   -- TEST 35
   SELECT results_eq('
-    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         RIGHT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::CHAR(100),
@@ -755,9 +755,9 @@ BEGIN;
 
   -- TEST 36
   SELECT results_eq('
-    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt 
-      FROM jft1 JT1 
-      CROSS JOIN jft2 JT2 
+    EXPLAIN (VERBOSE, COSTS OFF) SELECT JT1.flt, JT2.flt
+      FROM jft1 JT1
+      CROSS JOIN jft2 JT2
     ORDER BY JT1.flt, JT2.flt',
     ARRAY['Sort',
       '  Output: jt1.flt, jt2.flt',
@@ -774,9 +774,9 @@ BEGIN;
 
   -- TEST 37
   SELECT results_eq('
-    SELECT JT1.flt, JT2.flt 
-      FROM jft1 JT1 
-      CROSS JOIN jft2 JT2 
+    SELECT JT1.flt, JT2.flt
+      FROM jft1 JT1
+      CROSS JOIN jft2 JT2
     ORDER BY JT1.flt, JT2.flt',
     $$VALUES (
       123456.123456789::FLOAT,
@@ -787,11 +787,11 @@ BEGIN;
 
   CREATE FOREIGN TABLE fst1 (
       c1 INT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st1');
 
   CREATE FOREIGN TABLE fst2 (
       c1 INT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st2');
 
   -- TEST 38
   SELECT results_eq('

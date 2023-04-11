@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE n_ft (
       nb_default NUMERIC,
@@ -21,7 +21,7 @@ BEGIN;
       nb_ltm NUMERIC(38,19),
       nb_gtm NUMERIC(130,130),
       flt FLOAT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 1
   SELECT lives_ok(
@@ -32,7 +32,7 @@ BEGIN;
   CREATE FOREIGN TABLE n_prec (
       nb_38191  NUMERIC(38, 2),
       nb_gtm    NUMERIC(12, 4)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 2
   SELECT is(
@@ -56,7 +56,7 @@ BEGIN;
       nb_ltm CHAR(39),
       nb_gtm CHAR(39),
       flt CHAR(39)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 4
   SELECT lives_ok('SELECT * FROM n_ft1',
@@ -71,7 +71,7 @@ BEGIN;
       nb_ltm VARCHAR(39),
       nb_gtm VARCHAR(39),
       flt VARCHAR(39)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 5
   SELECT lives_ok('SELECT * FROM n_ft2',
@@ -86,7 +86,7 @@ BEGIN;
       nb_ltm TEXT,
       nb_gtm TEXT,
       flt TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 6
   SELECT lives_ok('SELECT * FROM n_ft3',
@@ -101,7 +101,7 @@ BEGIN;
       nb_ltm SMALLINT,
       nb_gtm SMALLINT,
       flt SMALLINT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'smallint_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'smallint_test');
 
   -- TEST 7
   SELECT lives_ok('SELECT * FROM n_ft4',
@@ -116,7 +116,7 @@ BEGIN;
       nb_ltm SMALLINT,
       nb_gtm SMALLINT,
       flt SMALLINT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'smallint_test_err');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'smallint_test_err');
 
   -- TEST 8
   SELECT throws_ok(
@@ -134,7 +134,7 @@ BEGIN;
     nb_ltm INTEGER,
     nb_gtm INTEGER,
     flt INTEGER
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'integer_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'integer_test');
 
   -- TEST 9
   SELECT lives_ok(
@@ -150,7 +150,7 @@ BEGIN;
       nb_ltm INTEGER,
       nb_gtm INTEGER,
       flt INTEGER
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'integer_test_err');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'integer_test_err');
 
   -- TEST 10
   SELECT throws_ok(
@@ -168,7 +168,7 @@ BEGIN;
       nb_ltm BIGINT,
       nb_gtm BIGINT,
       flt BIGINT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'bigint_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'bigint_test');
 
   -- TEST 11
   SELECT lives_ok(
@@ -184,7 +184,7 @@ BEGIN;
       nb_ltm BIGINT,
       nb_gtm BIGINT,
       flt BIGINT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'bigint_test_err');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'bigint_test_err');
 
   -- TEST 12
   SELECT throws_ok(
@@ -202,7 +202,7 @@ BEGIN;
       nb_ltm REAL,
       nb_gtm REAL,
       flt REAL
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'r_and_dp_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'r_and_dp_test');
 
   -- TEST 13
   SELECT lives_ok(
@@ -218,7 +218,7 @@ BEGIN;
       nb_ltm DOUBLE PRECISION,
       nb_gtm DOUBLE PRECISION,
       flt DOUBLE PRECISION
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'r_and_dp_test');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'r_and_dp_test');
 
   -- TEST 14
   SELECT lives_ok(
@@ -234,7 +234,7 @@ BEGIN;
       nb_ltm NUMERIC(2,1),
       nb_gtm NUMERIC(2,1),
       flt FLOAT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 15
   SELECT throws_ok(

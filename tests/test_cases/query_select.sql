@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE fst1 (
       c1 INT,
@@ -24,13 +24,13 @@ BEGIN;
       c8 SMALLINT,
       c9 NCHAR(9),
       c10 TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st1');
 
   CREATE FOREIGN TABLE fst2 (
       c1 INTEGER,
       c2 VARCHAR(14),
       c3 VARCHAR(13)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st2');
 
   -- TEST 1:
   SELECT lives_ok(
@@ -523,7 +523,7 @@ BEGIN;
       null_tsz TIMESTAMP WITH TIME ZONE,
       null_iytm INTERVAL YEAR TO MONTH,
       null_idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'null_test_table');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'null_test_table');
 
   -- TEST 32:
   SELECT results_eq('
