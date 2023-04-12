@@ -37,9 +37,11 @@ $ make install
 $ make installcheck
 ```
 
-2. Install PIP Requirements
+2. Install pyodbc dependencies
+
 ```shell
-$ python -m pip -r $TBFDW_HOME/tests/requirements.txt
+$ sudo apt-get install unixodbc
+$ python -m pip install -r $TBFDW_HOME/tests/requirements.txt
 ```
 
 3. Run Tests
