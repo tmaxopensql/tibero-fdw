@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE d_ft1 (
       dt DATE,
@@ -33,7 +33,7 @@ BEGIN;
       tslz6 TIMESTAMP WITH TIME ZONE,
       tslz_bc TIMESTAMP WITH TIME ZONE,
       tslz_ad TIMESTAMP WITH TIME ZONE
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- TEST 1
   SELECT is(
@@ -186,7 +186,7 @@ BEGIN;
   CREATE FOREIGN TABLE d_ft2 (
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't4');
 
   -- TEST 20
   SELECT lives_ok(
@@ -221,7 +221,7 @@ BEGIN;
       tslz6 TIMESTAMP,
       tslz_bc TIMESTAMP,
       tslz_ad TIMESTAMP
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- TEST 22:
   SELECT lives_ok(
@@ -249,7 +249,7 @@ BEGIN;
       tslz6 CHAR(30),
       tslz_bc CHAR(30),
       tslz_ad CHAR(30)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');  
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');  
 
   -- TEST 23:
   SELECT lives_ok(
@@ -277,7 +277,7 @@ BEGIN;
       tslz6 VARCHAR(30),
       tslz_bc VARCHAR(30),
       tslz_ad VARCHAR(30)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- TEST 24:
   SELECT lives_ok(
@@ -305,7 +305,7 @@ BEGIN;
       tslz6 TEXT,
       tslz_bc TEXT,
       tslz_ad TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- TEST 25:
   SELECT lives_ok(
@@ -333,7 +333,7 @@ BEGIN;
       tslz6 DATE,
       tslz_bc DATE,
       tslz_ad DATE
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- TEST 26:
   SELECT lives_ok(
@@ -348,7 +348,7 @@ BEGIN;
   CREATE FOREIGN TABLE d_ft8 (
     iytm    CHAR(50),
     idts    CHAR(50)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't4');
 
   -- TEST 27:
   SELECT lives_ok(
@@ -359,7 +359,7 @@ BEGIN;
   CREATE FOREIGN TABLE d_ft9 (
     iytm    VARCHAR(50),
     idts    VARCHAR(50)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't4');
 
   -- TEST 28:
   SELECT lives_ok(
@@ -370,7 +370,7 @@ BEGIN;
   CREATE FOREIGN TABLE d_ft10 (
     iytm    TEXT,
     idts    TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't4');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't4');
 
   -- TEST 29:
   SELECT lives_ok(

@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   SET COMPUTE_QUERY_ID=false;
 
@@ -39,7 +39,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   CREATE FOREIGN TABLE jft2 (
       c_kor CHAR(100),
@@ -65,7 +65,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   CREATE FOREIGN TABLE jft3 (
       c_kor CHAR(100),
@@ -91,7 +91,7 @@ BEGIN;
       tsz TIMESTAMP WITH TIME ZONE,
       iytm INTERVAL YEAR TO MONTH,
       idts INTERVAL DAY TO SECOND
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'jt1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'jt1');
 
   -- TEST 1:
   SELECT lives_ok('SELECT * FROM jft1');
@@ -787,11 +787,11 @@ BEGIN;
 
   CREATE FOREIGN TABLE fst1 (
       c1 INT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st1');
 
   CREATE FOREIGN TABLE fst2 (
       c1 INT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'st2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'st2');
 
   -- TEST 38
   SELECT results_eq('

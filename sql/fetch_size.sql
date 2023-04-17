@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER fetch_server_100 FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB, fetch_size '100');
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB', fetch_size '100');
 
   CREATE USER MAPPING FOR current_user
     SERVER fetch_server_100
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   -- TEST 1
   SELECT is(

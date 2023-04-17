@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE tx_ft1 (
       nvc_kor TEXT,
@@ -26,7 +26,7 @@ BEGIN;
       nvc2_kor_full TEXT,
       nvc2_eng_full TEXT,
       nvc2_spc_full TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   CREATE FOREIGN TABLE tx_ft2 (
       nb_default NUMERIC,
@@ -36,7 +36,7 @@ BEGIN;
       nb_ltm NUMERIC(38,19),
       nb_gtm NUMERIC(130,130),
       flt FLOAT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't2');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't2');
 
   -- TEST 1
   SELECT lives_ok(
@@ -69,7 +69,7 @@ BEGIN;
       nvc2_kor_full TEXT,
       nvc2_eng_full TEXT,
       nvc2_spc_full TEXT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 4: Foreign Table 대상으로 Index 생성하려고 할 때 에러 발생 검증
   SELECT throws_ok(

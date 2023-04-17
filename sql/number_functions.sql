@@ -7,11 +7,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE math_func_test_table (
       nb_default NUMERIC,
@@ -21,7 +21,7 @@ BEGIN;
       nb_ltm NUMERIC,
       nb_gtm NUMERIC(130,130),
       flt FLOAT
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'math_func_test_table');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'math_func_test_table');
 
   -- TEST 1:
   SELECT results_eq('

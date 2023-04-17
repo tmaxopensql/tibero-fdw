@@ -1,5 +1,13 @@
 #!/bin/bash
-. $(dirname "$0")/test.conf
+
+if [ -e $(dirname "$0")/test.conf ]; then
+  . $(dirname "$0")/test.conf
+else
+	echo "[ERROR] Follow the steps below"
+	echo "1. Copy $(dirname "$0")/test.conf.eg to $(dirname "$0")/test.conf"
+	echo "2. Configure $(dirname "$0")/test.conf"
+	exit 0;
+fi
 
 if [[ -z ${TIBERO_HOST} ]] || [[ -z ${TIBERO_PORT} ]] || [[ -z ${TIBERO_USER} ]] || [[ -z ${TIBERO_PASS} ]] || [[ -z ${TIBERO_DB} ]];
 then

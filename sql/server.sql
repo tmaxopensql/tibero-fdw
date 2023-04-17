@@ -34,15 +34,15 @@ BEGIN;
   );
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE just_conn_test_table (
     test    char(50)
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 'just_conn_test_table');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 'just_conn_test_table');
 
   CREATE FOREIGN TABLE charset_check (
       characterset_name         char(50),

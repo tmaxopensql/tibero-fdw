@@ -18,7 +18,7 @@ $ make installcheck
 
 2. Configure environment
 
-Open `sql/test.conf` file with any text editor and modify parameters according to your environment and settings.
+At the first, you need to copy `sql/test.conf.eg` to `sql/test.conf`. Open `sql/test.conf` file with any text editor and modify parameters according to your environment and settings.
 
   - `TIBERO_HOST` : Host address of remote Tibero server
   - `TIBERO_PORT` : Port of remote Tibero server
@@ -54,7 +54,7 @@ $ make test
 To run specific test script file only, run below script directly under `sql/` directory.
 
 ```shell
-$ ./run_test.sh 01-extension.sql
+$ ./run_test.sh extension.sql
 ```
 
  
