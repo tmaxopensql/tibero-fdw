@@ -2,9 +2,36 @@
 BEGIN;
   CREATE EXTENSION IF NOT EXISTS pgtap;
 
-  SELECT plan(13);
+  SELECT plan(14);
 
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
+
+  -- TEST 1
+  SELECT throws_ok('
+    CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
+    OPTIONS (port ''0000'', dbname ''invalid_dbname'');',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to create a foreign server without a valid host option'
+  );
+
+  -- TEST 2
+  SELECT throws_ok('
+    CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
+    OPTIONS (host ''localhost'', dbname ''invalid_dbname'');',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to create a foreign server without a valid port option'
+  );
+
+  -- TEST 3
+  SELECT throws_ok('
+    CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
+    OPTIONS (host ''localhost'', port ''0000'');',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to create a foreign server without a valid dbname option'
+  );
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
     OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
@@ -22,82 +49,85 @@ BEGIN;
       nchar_characterset_name   char(50)
   ) SERVER server_name OPTIONS (owner_name 'sys', table_name '_VT_NLS_CHARACTER_SET');
 
-  -- TEST 1
+  -- TEST 4
   SELECT lives_ok('
     SELECT * FROM just_conn_test_table;',
-    'Test connection'
+    'Test connection with valid foreign server options'
   );
 
-  -- TEST 2
+  -- TEST 5
   SELECT alike(
     (SELECT characterset_name FROM charset_check LIMIT 1),
     'UTF%',
     'Test CHARACTERSET_NAME of remote Tibero server - must be of Unicode family'
   );
 
-  -- TEST 3
+  -- TEST 6
   SELECT alike(
     (SELECT nchar_characterset_name FROM charset_check LIMIT 1),
     'UTF%',
     'Test NCHAR_CHARACTERSET_NAME of remote Tibero server - must be of Unicode family'
   );
 
-  -- TEST 4: Check error is thrown when port and dbname options are not given
-  ALTER SERVER server_name OPTIONS (DROP port);
-  ALTER SERVER server_name OPTIONS (DROP dbname);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table;');
+  -- TEST 7
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (DROP host);',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to DROP host option from foreign server');
 
-  -- TEST 5: Check error is thrown when host and port options are not given
-  ALTER SERVER server_name OPTIONS (DROP host);
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table;');
-   
-  -- TEST 6: Check error is thrown when host and dbname options are not given
-  ALTER SERVER server_name OPTIONS (DROP dbname);
-  ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table');
+  -- TEST 8
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (DROP port);',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to DROP port option from foreign server');
 
-  -- TEST 7: Check error is thrown when host option is not given
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table');
-
-  -- TEST 8: Check error is thrown when port option is not given
-  ALTER SERVER server_name OPTIONS (DROP port);
-  ALTER SERVER server_name OPTIONS (ADD host :TIBERO_HOST);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table');
-
-  -- TEST 9: Check error is thrown when dbname option is not given
-  ALTER SERVER server_name OPTIONS (DROP dbname);
-  ALTER SERVER server_name OPTIONS (ADD port :TIBERO_PORT);
-  SELECT throws_ok('SELECT * FROM just_conn_test_table');
+  -- TEST 9
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (DROP dbname);',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to DROP dbname option from foreign server');
 
   -- TEST 10
-  ALTER SERVER server_name OPTIONS (ADD dbname :TIBERO_DB);
-  SELECT lives_ok('
-    SELECT * FROM just_conn_test_table;',
-    'Check the connection works again when the valid host, port, dbname options are given'
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (ADD host ''invalid_host'');',
+    '42710',
+    'option "host" provided more than once',
+    'Check an error is thrown when trying to add a host option to foreign server'
   );
 
-  -- TEST 11: Check error is thrown when username option is not given
-  ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (DROP username);
-  SELECT throws_ok('
-    SELECT * FROM just_conn_test_table;');
+  -- TEST 11
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (ADD port ''0000'');',
+    '42710',
+    'option "port" provided more than once',
+    'Check an error is thrown when trying to add a port option to foreign server'
+  );
 
-  -- TEST 12: Check error is thrown when password option is not given
-  ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (ADD username :TIBERO_USER);
-  ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (DROP password);
-  SELECT throws_ok('
-    SELECT * FROM just_conn_test_table;');
+  -- TEST 12
+  SELECT throws_ok(
+    'ALTER SERVER server_name OPTIONS (ADD dbname ''invalid_dbname'');',
+    '42710',
+    'option "dbname" provided more than once',
+    'Check an error is thrown when trying to add a dbname option to foreign server'
+  );
 
   -- TEST 13
-  ALTER USER MAPPING FOR CURRENT_USER SERVER server_name
-    OPTIONS (ADD password :TIBERO_PASS);
-  SELECT lives_ok('
-    SELECT * FROM just_conn_test_table;',
-    'Check the connection works again when the valid username, password options are given'
+  SELECT throws_ok(
+    'ALTER USER MAPPING FOR CURRENT_USER SERVER server_name OPTIONS (DROP username);',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to DROP username option from user mapping'
+  );
+
+  -- TEST 14
+  SELECT throws_ok(
+    'ALTER USER MAPPING FOR CURRENT_USER SERVER server_name OPTIONS (DROP password);',
+    'HV000',
+    'insufficient options',
+    'Check an error is thrown when trying to DROP password option from user mapping'
   );
 
   -- Finish the tests and clean up.

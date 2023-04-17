@@ -43,9 +43,9 @@ BEGIN;
   );
 
   -- TEST 4
-  CREATE FOREIGN TABLE fetch_table_1000 ( 
-      x int 
-  ) SERVER fetch_server_100 OPTIONS ( fetch_size '1000' );
+  CREATE FOREIGN TABLE fetch_table_1000 (
+      cx int
+  ) SERVER fetch_server_100 OPTIONS (table_name 'ft_test', fetch_size '1000');
 
   SELECT is(
     (SELECT COUNT(*) FROM pg_catalog.pg_foreign_table
