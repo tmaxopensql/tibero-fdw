@@ -177,8 +177,6 @@ apply_server_options(TbFdwRelationInfo *fpinfo)
 			(void) parse_real(defGetString(def), &fpinfo->fdw_startup_cost, 0, NULL);
 		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
 			(void) parse_real(defGetString(def), &fpinfo->fdw_tuple_cost, 0, NULL);
-		else if (strcmp(def->defname, "extensions") == 0)
-			fpinfo->shippable_extensions = NIL;
 		else if (strcmp(def->defname, "fetch_size") == 0)
 			(void) parse_int(defGetString(def), &fpinfo->fetch_size, 0, NULL);
 		else if (strcmp(def->defname, "use_fb_query") == 0)
@@ -230,7 +228,6 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
-	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = DEFAULT_FDW_FETCH_SIZE;
 
 	fpinfo->use_fb_query = false;
@@ -337,7 +334,7 @@ tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel, Oid foreigntable
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else if (list_member_ptr(fpinfo->local_conds, rinfo))
 				local_exprs = lappend(local_exprs, rinfo->clause);
-			else if (is_foreign_expr(root, foreignrel, rinfo->clause))
+			else if (expr_inspect_shippability(root, foreignrel, rinfo->clause))
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else
 				local_exprs = lappend(local_exprs, rinfo->clause);

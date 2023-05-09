@@ -1,7 +1,7 @@
 # contrib/tibero_fdw/Makefile
 
 MODULE_big = tibero_fdw
-OBJS = utils.o deparse.o connection.o option.o tibero_fdw.o
+OBJS = utils.o deparse.o connection.o option.o conditions.o tibero_fdw.o
 PGFILEDESC = "tibero_fdw - foreign data wrapper for Tibero"
 
 PG_CPPFLAGS = -I./include

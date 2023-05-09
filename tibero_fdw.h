@@ -43,7 +43,6 @@ typedef struct TbFdwRelationInfo
 	bool use_remote_estimate;
 	Cost fdw_startup_cost;
 	Cost fdw_tuple_cost;
-	List *shippable_extensions;
 
 	ForeignTable *table;
 	ForeignServer *server;
@@ -53,14 +52,23 @@ typedef struct TbFdwRelationInfo
 
 	char *relation_name;
 
+	/* Join information */
+	RelOptInfo *outerrel;
+	RelOptInfo *innerrel;
+	JoinType	jointype;
+	List	   *joinclauses;
+	UpperRelationKind stage;
+
 	bool use_fb_query;
 	bool use_sleep_on_sig;
 } TbFdwRelationInfo;
 
-/* in deparse.c */
+/* in conditions.c */
 extern void classify_conditions(PlannerInfo *root, RelOptInfo *baserel, List *input_conds,
 																List **remote_conds, List **local_conds);
-extern bool is_foreign_expr(PlannerInfo *root, RelOptInfo *baserel, Expr *expr);
+extern bool expr_inspect_shippability(PlannerInfo *root, RelOptInfo *baserel, Expr *expr);
+
+/* in deparse.c */
 extern void deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel,
 																				List *tlist, List *remote_conds, List *pathkeys,
 																				bool has_final_sort, bool has_limit, bool is_subquery,

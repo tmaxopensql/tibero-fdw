@@ -68,32 +68,6 @@ static void deparse_from_expr_for_rel(StringInfo buf, PlannerInfo *root, RelOptI
 static void deparse_from_expr(List *quals, deparse_expr_ctx *context);
 
 void
-classify_conditions(PlannerInfo *root, RelOptInfo *baserel, List *input_conds, List **remote_conds,
-										List **local_conds)
-{
-	ListCell *lc;
-
-	*remote_conds = NIL;
-	*local_conds = NIL;
-
-	foreach(lc, input_conds) {
-		RestrictInfo *ri = lfirst_node(RestrictInfo, lc);
-
-		if (is_foreign_expr(root, baserel, ri->clause))
-			*remote_conds = lappend(*remote_conds, ri);
-		else
-			*local_conds = lappend(*local_conds, ri);
-	}
-}
-
-bool
-is_foreign_expr(PlannerInfo *root, RelOptInfo *baserel, Expr *expr)
-{
-	/* TODO */
-	return false;
-}
-
-void
 deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *rel, List *tlist,
 														List *remote_conds, List *pathkeys, bool has_final_sort, bool has_limit,
 														bool is_subquery, List **retrieved_attrs, List **params_list,
