@@ -6,7 +6,7 @@ BEGIN;
 
   -- TEST 1
   SELECT lives_ok('
-    CREATE EXTENSION tibero_fdw',
+    CREATE EXTENSION IF NOT EXISTS tibero_fdw',
     'Test CREATE EXTENSION command'
   );
 
