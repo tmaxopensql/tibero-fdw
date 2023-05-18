@@ -71,7 +71,8 @@ enum FdwScanPrivateIndex
 	FdwScanPrivateSelectSql,
 	FdwScanPrivateRetrievedAttrs,
 	FdwScanPrivateFetchSize,
-	FdwScanPrivateUseFbQuery
+	FdwScanPrivateUseFbQuery,
+	FdwScanPrivateRelations
 };
 
 enum FdwPathPrivateIndex
@@ -136,11 +137,14 @@ static void tiberoEndForeignScan(ForeignScanState *node);
 static void tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
 																			RelOptInfo *innerrel, JoinType jointype,
 																			JoinPathExtraData *extra);
+static void tiberoExplainForeignScan(ForeignScanState *node, ExplainState *ex);
 /********************************************************************** FDW callback routines }}} */
 
 /* {{{ Helper functions ***************************************************************************/
 static bool foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 														RelOptInfo *outerrel, RelOptInfo *innerrel, JoinPathExtraData *extra);
+static inline bool foreign_scan_has_upper_rels(List *fdw_private);
+static inline StringInfo get_foreign_scan_upper_rel_names(ForeignScan *plan, ExplainState *es);
 /*************************************************************************** Helper functions }}} */
 
 Datum
@@ -160,6 +164,9 @@ tibero_fdw_handler(PG_FUNCTION_ARGS)
 	/* Support functions for join push-down */
 	routine->GetForeignJoinPaths = tiberoGetForeignJoinPaths;
 
+	/* Support functions for EXPLAIN */
+	routine->ExplainForeignScan = tiberoExplainForeignScan;
+
 	PG_RETURN_POINTER(routine);
 }
 
@@ -177,8 +184,6 @@ apply_server_options(TbFdwRelationInfo *fpinfo)
 			(void) parse_real(defGetString(def), &fpinfo->fdw_startup_cost, 0, NULL);
 		else if (strcmp(def->defname, "fdw_tuple_cost") == 0)
 			(void) parse_real(defGetString(def), &fpinfo->fdw_tuple_cost, 0, NULL);
-		else if (strcmp(def->defname, "extensions") == 0)
-			fpinfo->shippable_extensions = NIL;
 		else if (strcmp(def->defname, "fetch_size") == 0)
 			(void) parse_int(defGetString(def), &fpinfo->fetch_size, 0, NULL);
 		else if (strcmp(def->defname, "use_fb_query") == 0)
@@ -230,7 +235,6 @@ tiberoGetForeignRelSize(PlannerInfo *root, RelOptInfo *baserel,
 
 	fpinfo->fdw_startup_cost = DEFAULT_FDW_STARTUP_COST;
 	fpinfo->fdw_tuple_cost = DEFAULT_FDW_TUPLE_COST;
-	fpinfo->shippable_extensions = NIL;
 	fpinfo->fetch_size = DEFAULT_FDW_FETCH_SIZE;
 
 	fpinfo->use_fb_query = false;
@@ -337,7 +341,7 @@ tiberoGetForeignPlan(PlannerInfo *root, RelOptInfo *foreignrel, Oid foreigntable
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else if (list_member_ptr(fpinfo->local_conds, rinfo))
 				local_exprs = lappend(local_exprs, rinfo->clause);
-			else if (is_foreign_expr(root, foreignrel, rinfo->clause))
+			else if (expr_inspect_shippability(root, foreignrel, rinfo->clause))
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else
 				local_exprs = lappend(local_exprs, rinfo->clause);
@@ -632,4 +636,122 @@ tiberoGetForeignJoinPaths(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *ou
 	}
 
 	set_sleep_on_sig_off();
+}
+
+static void
+tiberoExplainForeignScan(ForeignScanState *node, ExplainState *es)
+{
+	ForeignScan *plan = castNode(ForeignScan, node->ss.ps.plan);
+	List *fdw_private = plan->fdw_private;
+
+	/*
+	* TODO: This is a direct copy from postgres_fdw. Might need to check.
+	*
+	* Identify foreign scans that are really joins or upper relations.  The
+	* input looks something like "(1) LEFT JOIN (2)", and we must replace the
+	* digit string(s), which are RT indexes, with the correct relation names.
+	* We do that here, not when the plan is created, because we can't know
+	* what aliases ruleutils.c will assign at plan creation time.
+	*/
+	if (foreign_scan_has_upper_rels(plan->fdw_private))
+	{
+		StringInfo rel_names = get_foreign_scan_upper_rel_names(plan, es);
+		ExplainPropertyText("Relations", rel_names->data, es);
+	}
+
+	/* Add remote query when VERBOSE option is specified */
+	if (es->verbose)
+	{
+		char *sql = strVal(list_nth(fdw_private, FdwScanPrivateSelectSql));
+		ExplainPropertyText("Remote SQL", sql, es);
+	}
+}
+
+static inline bool
+foreign_scan_has_upper_rels(List *fdw_private)
+{
+	return list_length(fdw_private) > FdwScanPrivateRelations;
+}
+
+
+static inline StringInfo
+get_foreign_scan_upper_rel_names(ForeignScan *plan, ExplainState *es)
+{
+	List *fdw_private = plan->fdw_private;
+	StringInfo relations;
+	char *rawrelations;
+	char *ptr;
+	int minrti;
+	int rtoffset;
+
+	rawrelations = strVal(list_nth(fdw_private, FdwScanPrivateRelations));
+
+	/*
+	 * A difficulty with using a string representation of RT indexes is
+	 * that setrefs.c won't update the string when flattening the
+	 * rangetable.  To find out what rtoffset was applied, identify the
+	 * minimum RT index appearing in the string and compare it to the
+	 * minimum member of plan->fs_relids.  (We expect all the relids in
+	 * the join will have been offset by the same amount; the Asserts
+	 * below should catch it if that ever changes.)
+	 */
+	minrti = INT_MAX;
+	ptr = rawrelations;
+	while (*ptr)
+	{
+		if (isdigit((unsigned char) *ptr))
+		{
+			int			rti = strtol(ptr, &ptr, 10);
+
+			if (rti < minrti)
+				minrti = rti;
+		}
+		else
+			ptr++;
+	}
+	rtoffset = bms_next_member(plan->fs_relids, -1) - minrti;
+
+	/* Now we can translate the string */
+	relations = makeStringInfo();
+	ptr = rawrelations;
+	while (*ptr)
+	{
+		if (isdigit((unsigned char) *ptr))
+		{
+			int rti = strtol(ptr, &ptr, 10);
+			RangeTblEntry *rte;
+			char *relname;
+			char *refname;
+
+			rti += rtoffset;
+			Assert(bms_is_member(rti, plan->fs_relids));
+			rte = rt_fetch(rti, es->rtable);
+			Assert(rte->rtekind == RTE_RELATION);
+
+			/* This logic should agree with explain.c's ExplainTargetRel */
+			relname = get_rel_name(rte->relid);
+			if (es->verbose)
+			{
+				char *namespace;
+
+				namespace = get_namespace_name(get_rel_namespace(rte->relid));
+				appendStringInfo(relations, "%s.%s",
+									quote_identifier(namespace),
+									quote_identifier(relname));
+			}
+			else
+				appendStringInfoString(relations,
+											quote_identifier(relname));
+			refname = (char *) list_nth(es->rtable_names, rti - 1);
+			if (refname == NULL)
+				refname = rte->eref->aliasname;
+			if (strcmp(refname, relname) != 0)
+				appendStringInfo(relations, " %s",
+									quote_identifier(refname));
+		}
+		else
+			appendStringInfoChar(relations, *ptr++);
+	}
+
+	return relations;
 }
