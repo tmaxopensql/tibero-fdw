@@ -16,6 +16,7 @@
 #include "foreign/foreign.h"											/* ForeignServer, ForeignTable									*/
 #include "lib/stringinfo.h"						  					/* StringInfo                         					*/
 #include "nodes/pathnodes.h"											/* PlannerInfo, RelOptInfo											*/
+#include "utils/rel.h"														/* Relation																			*/
 
 #include "sqlcli.h"
 #include "sqlcli_types.h"
@@ -61,6 +62,7 @@ typedef struct TbFdwRelationInfo
 
 	bool use_fb_query;
 	bool use_sleep_on_sig;
+	bool updatable;
 } TbFdwRelationInfo;
 
 /* in conditions.c */
@@ -74,6 +76,8 @@ extern void deparse_select_stmt_for_rel(StringInfo buf, PlannerInfo *root, RelOp
 																				bool has_final_sort, bool has_limit, bool is_subquery,
 																				List **retrieved_attrs, List **params_list,
 																				bool use_fb_query);
+extern void deparse_insert_sql(StringInfo buf, PlannerInfo *root, Index rtindex, Relation rel,
+															 List *targetAttrs);
 
 /* in utils.c */
 extern void register_signal_handlers(void);

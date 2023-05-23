@@ -64,7 +64,7 @@ void TbSQLAllocHandle(ConnCacheEntry *entry, SQLSMALLINT handle_type, SQLHANDLE 
 void TbSQLFreeStmt(TbStatement *tbStmt, SQLUSMALLINT option);
 void TbSQLExecute(TbStatement *tbStmt);
 void TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no, SQLSMALLINT input_output_type,
-												SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN col_size,
+												SQLSMALLINT value_type, Oid pg_param_type, SQLULEN col_size,
 												SQLSMALLINT decimal_digits, SQLPOINTER param_value, SQLLEN buffer_len,
 												SQLLEN *str_len_or_ind);
 void TbSQLDescribeCol(TbStatement *tbStmt, SQLUSMALLINT col_no, SQLCHAR *col_name,

@@ -57,7 +57,7 @@ static void daprse_target_list(StringInfo buf, RangeTblEntry *rte, Index rtindex
 															 List **retrieved_attrs);
 static void deparse_column_ref(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 															 bool qualify_col);
-static void deparse_replation(StringInfo buf, Relation rel, bool use_fb_query);
+static void deparse_relation(StringInfo buf, Relation rel, bool use_fb_query);
 static void deparse_expr(Expr *expr, deparse_expr_ctx *context);
 static void deparse_select_sql(List *tlist, bool is_subquery, List **retrieved_attrs,
 							 								 deparse_expr_ctx *context);
@@ -217,7 +217,7 @@ deparse_from_expr_for_rel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreign
 
 	Relation rel = table_open(rte->relid, NoLock);
 
-	deparse_replation(buf, rel, use_fb_query);
+	deparse_relation(buf, rel, use_fb_query);
 
 	if (use_alias)
 		appendStringInfo(buf, " %s%d", REL_ALIAS_PREFIX, foreignrel->relid);
@@ -229,46 +229,11 @@ static void
 deparse_column_ref(StringInfo buf, int varno, int varattno, RangeTblEntry *rte, bool qualify_col)
 {
 	if (varattno == SelfItemPointerAttributeNumber) {
-		if (qualify_col)
-			ADD_REL_QUALIFIER(buf, varno);
-		appendStringInfoString(buf, "ctid");
+		/* TODO */
 	} else if (varattno < 0) {
-		Oid fetchval = 0;
-
-		if (varattno == TableOidAttributeNumber)
-			fetchval = rte->relid;
-
-		if (qualify_col) {
-			appendStringInfoString(buf, "CASE WHEN (");
-			ADD_REL_QUALIFIER(buf, varno);
-			appendStringInfo(buf, "*)::text IS NOT NULL THEN %u END", fetchval);
-		}	else {
-			appendStringInfo(buf, "%u", fetchval);
-		}
+		/* TODO */
 	} else if (varattno == 0) {
-		Relation rel;
-		Bitmapset *attrs_used;
-		List *retrieved_attrs;
-
-		rel = table_open(rte->relid, NoLock);
-
-		attrs_used = bms_add_member(NULL, 0 - FirstLowInvalidHeapAttributeNumber);
-
-		if (qualify_col) {
-			appendStringInfoString(buf, "CASE WHEN (");
-			ADD_REL_QUALIFIER(buf, varno);
-			appendStringInfoString(buf, "*)::text IS NOT NULL THEN ");
-		}
-
-		appendStringInfoString(buf, "ROW(");
-		daprse_target_list(buf, rte, varno, rel, false, attrs_used, qualify_col, &retrieved_attrs);
-		appendStringInfoChar(buf, ')');
-
-		if (qualify_col)
-			appendStringInfoString(buf, " END");
-
-		table_close(rel, NoLock);
-		bms_free(attrs_used);
+		/* TODO */
 	} else {
 		char *colname = NULL;
 		List *options;
@@ -298,7 +263,7 @@ deparse_column_ref(StringInfo buf, int varno, int varattno, RangeTblEntry *rte, 
 }
 
 static void
-deparse_replation(StringInfo buf, Relation rel, bool use_fb_query)
+deparse_relation(StringInfo buf, Relation rel, bool use_fb_query)
 {
 	ForeignTable *table;
 	const char *owner_name = NULL;
@@ -334,4 +299,46 @@ deparse_expr(Expr *node, deparse_expr_ctx *context)
 {
 	Assert(node == NULL);
 	return;
+}
+
+void
+deparse_insert_sql(StringInfo buf, PlannerInfo *root, Index rtindex, Relation rel,
+									 List *targetAttrs)
+{
+	ListCell *lc;
+	RangeTblEntry *rte;
+
+	rte = planner_rt_fetch(rtindex, root);
+
+	appendStringInfo(buf, "INSERT INTO ");
+	deparse_relation(buf, rel, false);
+
+	if (targetAttrs) {
+		bool first;
+
+		appendStringInfoChar(buf, '(');
+
+		first = true;
+		foreach(lc, targetAttrs) {
+			int attnum = lfirst_int(lc);
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+			deparse_column_ref(buf, rtindex, attnum, rte, false);
+		}
+
+		appendStringInfoString(buf, ") VALUES (");
+
+		first = true;
+		foreach(lc, targetAttrs) {
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
+			appendStringInfo(buf, "?");
+		}
+		appendStringInfoChar(buf, ')');
+	} else {
+		Assert(false);
+	}
 }
