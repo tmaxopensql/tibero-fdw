@@ -73,6 +73,7 @@ static void TbfdwInvalCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 static void make_tb_connection(ConnCacheEntry *conn, UserMapping *user);
 SQLUINTEGER get_tb_type_max_str_size(int type, SQLUINTEGER col_size, ConnCacheEntry *conn);
+SQLUINTEGER get_tb_type_from_pg_type(Oid pg_type);
 
 static void
 begin_remote_xact(TbStatement *tbStmt, bool isSerializable)
@@ -445,12 +446,12 @@ TbSQLExecute(TbStatement *tbStmt)
 
 void
 TbSQLBindParameter(TbStatement *tbStmt, SQLUSMALLINT param_no, SQLSMALLINT input_output_type,
-									 SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN col_size,
+									 SQLSMALLINT value_type, Oid pg_param_type, SQLULEN col_size,
 									 SQLSMALLINT decimal_digits, SQLPOINTER param_value, SQLLEN buffer_len,
 									 SQLLEN *str_len_or_ind)
 {
 	SQLRETURN rc = SQLBindParameter(tbStmt->hstmt, param_no, input_output_type, value_type,
-																	param_type, col_size, decimal_digits, param_value, buffer_len,
+																	get_tb_type_from_pg_type(pg_param_type), col_size, decimal_digits, param_value, buffer_len,
 																	str_len_or_ind);
 	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
 		/* TODO Add processing for SQL_SUCCESS_WITH_INFO */
@@ -632,4 +633,47 @@ get_tb_type_max_str_size(int type, SQLUINTEGER col_size, ConnCacheEntry *conn)
 
 	/* + 1 for null termination */
 	return res + 1;
+}
+
+SQLUINTEGER
+get_tb_type_from_pg_type(Oid type)
+{
+	switch (type)
+	{
+		case INT2OID:
+			return SQL_SMALLINT;
+		case INT4OID:
+			return SQL_INTEGER;
+		case INT8OID:
+			return SQL_INTEGER;
+		case FLOAT4OID:
+			return SQL_FLOAT;
+		case FLOAT8OID:
+			return SQL_DOUBLE;
+		case NUMERICOID:
+			return SQL_NUMERIC;
+		case BOOLOID:
+			return SQL_BOOLEAN;
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+		case JSONOID:
+		case ANYENUMOID:
+			return SQL_VARCHAR;
+		case NAMEOID:
+			return SQL_VARCHAR;
+		case DATEOID:
+			return SQL_DATE;
+		case TIMEOID:
+		case TIMESTAMPOID:
+		case TIMESTAMPTZOID:
+			return SQL_TIMESTAMP;
+		case BITOID:
+			return SQL_LONGVARCHAR;
+		case BYTEAOID:
+			return SQL_BLOB;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), errmsg("cannot convert pgtype(%d)", type)));
+			break;
+	}
 }
