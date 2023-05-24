@@ -422,7 +422,6 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	UserMapping *user;
 	int rtindex;
 	int i;
-	SQLLEN ind = 0;
 
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return;
@@ -483,9 +482,8 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	}
 
 	if (fsstate->use_fb_query && !IsolationUsesXactSnapshot()) {
-		ind = SQL_NTS;
 		TbSQLBindParameter(fsstate->tbStmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, NUMERICOID, 0, 0,
-											 fsstate->tbStmt->conn->tsn, sizeof(fsstate->tbStmt->conn->tsn), &ind);
+											 fsstate->tbStmt->conn->tsn, strlen(fsstate->tbStmt->conn->tsn), NULL);
 	}
 
 	TbSQLSetStmtAttr(fsstate->tbStmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)fsstate->fetch_size, 0);
