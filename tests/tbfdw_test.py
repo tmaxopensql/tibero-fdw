@@ -71,14 +71,6 @@ class Arguments:
 			help="Initialize configuration with regard to connection infos"
 		)
 
-		self.arg_parser.add_argument(
-			"-f",
-			"--freeze",
-			dest="freeze_on_exception",
-			action="store_true",
-			help="Freeze on exception. It will not rollback test environments on exception."
-		)
-
 	def parse(self):
 		return self.arg_parser.parse_args()
 
@@ -151,7 +143,7 @@ class Singleton(type):
 
 class TestDatabase(metaclass=Singleton):
 	def __init__(self):
-		self.dbname = "tbfdwtest" + str(random.getrandbits(32))
+		self.dbname = "tbfdw_test_" + str(random.getrandbits(32))
 		self.created = False
 
 	def __rep__(self):
@@ -185,7 +177,11 @@ class TestDatabase(metaclass=Singleton):
 		os.environ["PGPASSWORD"] = config["postgres"]["password"]
 		self.password = config["postgres"]["password"]
 
-		subprocess.run(createdb_command)
+		print("Creating test database in the local PostgreSQL server.")
+		p = subprocess.run(createdb_command, stdout=open(os.devnull, 'wb'))
+		if p.returncode != 0:
+			raise Exception("Unable to create test database in PostgreSQL. Please check connection info.")
+		print(f"Database {self.dbname} created.\n")
 		self.created = True
 
 	def drop(self):
@@ -205,16 +201,29 @@ class TestDatabase(metaclass=Singleton):
 
 class TiberoConnector(metaclass=Singleton):
 	def __init__(self):
-		self.connection = pyodbc.connect(f"DSN={ODBC_DSN}")
+		self.connected = False
 
 	def __del__(self):
-		self.connection.close()
+		self.disconnect()
 
 	def __rep__(self):
 		return f"<TestDatabase dbname:{self.dbname} created:{self.created}"
 
 	def __str__(self):
 		return f"TestDatabase with name {self.dbname}"
+
+	def connect(self):
+		if self.connected:
+			return
+
+		self.connection = pyodbc.connect(f"DSN={ODBC_DSN}")
+		self.connected = True
+
+	def disconnect(self):
+		if not self.connected:
+			return
+
+		self.connection.close()
 
 	def check_tibero_health(self):
 		cursor = self.connection.cursor()
@@ -236,14 +245,6 @@ def upload_config_file():
 
 	config = configparser.ConfigParser()
 	config.read(config_file_path)
-
-	tb_user = config["tibero"]["user"]
-	tb_passwd = getpass.getpass(f"Password for Tibero User ({tb_user}): ")
-	config["tibero"]["password"] = tb_passwd
-
-	pg_user = config["postgres"]["superuser"]
-	pg_passwd = getpass.getpass(f"Password for Postgres Superuser ({pg_user}): ")
-	config["postgres"]["password"] = pg_passwd
 
 	return config
 
@@ -269,14 +270,17 @@ def prepare(config, args):
 	check_pgtap_is_installed()
 	check_odbc_is_installed()
 
-	if not args.without_tibero and not args.dry:
-		create_odbc_ini_file(config)
-		set_tbcli_env_vars(args.trace_tbcli)
-		check_tibero_health()
-		initialize_tibero_test_schema()
+	if not args.dry:
+		set_postgres_password_in_config(config)
+		testdb = TestDatabase()
+		testdb.create(config)
 
-	testdb = TestDatabase()
-	testdb.create(config)
+		if not args.without_tibero:
+			set_tibero_password_in_config(config)
+			create_odbc_ini_file(config)
+			set_tbcli_env_vars(args.trace_tbcli)
+			check_tibero_health()
+			initialize_tibero_test_schema()
 
 def check_pgtap_is_installed():
 	p = subprocess.run(["pg_prove", "--version"], stdout=open(os.devnull, 'wb'))
@@ -289,6 +293,16 @@ def check_odbc_is_installed():
 
 	if p.returncode != 0:
 		raise Exception("Please check if unixodbc is installed. Read README.md for instruction.")
+
+def set_tibero_password_in_config(config):
+	tb_user = config["tibero"]["user"]
+	tb_passwd = getpass.getpass(f"Password for Tibero User ({tb_user}): ")
+	config["tibero"]["password"] = tb_passwd
+
+def set_postgres_password_in_config(config):
+	pg_user = config["postgres"]["superuser"]
+	pg_passwd = getpass.getpass(f"Password for Postgres Superuser ({pg_user}): ")
+	config["postgres"]["password"] = pg_passwd
 
 def create_odbc_ini_file(config):
 	odbc_ini_file_path = Path.get_odbc_ini_file()
@@ -317,11 +331,11 @@ def set_tbcli_env_vars(trace_tbcli):
 
 def check_tibero_health():
 	tb_connector = TiberoConnector()
+	tb_connector.connect()
 	tb_connector.check_tibero_health()
 
 def initialize_tibero_test_schema():
 	print("Initializing test schema in the remote Tibero server.")
-	print("This might take a while...")
 
 	init_schema_script = Path.get_tibero_init_schema_sql_file()
 	insert_data_script = Path.get_tibero_insert_data_sql_file()
@@ -329,7 +343,7 @@ def initialize_tibero_test_schema():
 	tb_connector.execute_sql_script(init_schema_script)
 	tb_connector.execute_sql_script(insert_data_script)
 
-	print("Done.")
+	print("Test schema is initialized.\n")
 
 def execute(config, args):
 	test_cases_to_run = get_test_cases_to_run(args.keywords)
@@ -338,7 +352,9 @@ def execute(config, args):
 	for tests in test_cases_to_run:
 		pgtap_command.append(os.path.join(Path.get_test_cases_dir(), tests))
 
-	os.environ["PGPASSWORD"] = config["postgres"]["password"]
+	if not args.dry:
+		os.environ["PGPASSWORD"] = config["postgres"]["password"]
+
 	subprocess.run(pgtap_command)
 
 def get_test_cases_to_run(keywords):
@@ -362,10 +378,6 @@ def get_pgtap_command(config, args):
 	pgtap_command.append("--set")
 	pgtap_command.append("PSQLRC=default")
 
-	if args.dry:
-		pgtap_command.append("--dry")
-		print("Dry run. Here is the list of test cases that will be running:")
-
 	if args.quiet:
 		pgtap_command.append("--QUIET")
 	else:
@@ -376,9 +388,6 @@ def get_pgtap_command(config, args):
 
 	pgtap_command.append("--port")
 	pgtap_command.append(config["postgres"]["port"])
-
-	pgtap_command.append("--dbname")
-	pgtap_command.append(TestDatabase().dbname)
 
 	pgtap_command.append("--username")
 	pgtap_command.append(config["postgres"]["superuser"])
@@ -395,16 +404,25 @@ def get_pgtap_command(config, args):
 	pgtap_command.append("--set")
 	pgtap_command.append("TIBERO_USER=" + config["tibero"]["user"])
 
-	pgtap_command.append("--set")
-	pgtap_command.append("TIBERO_PASS=" + config["tibero"]["password"])
+	if args.dry:
+		pgtap_command.append("--dry")
+		print("Dry run. Here is the list of test cases that will be running:")
+	else:
+		pgtap_command.append("--dbname")
+		pgtap_command.append(TestDatabase().dbname)
+
+		pgtap_command.append("--set")
+		pgtap_command.append("TIBERO_PASS=" + config["tibero"]["password"])
 
 	return pgtap_command
 
 def rollback():
 	if Path.file_exists(Path.get_odbc_ini_file()):
-		rollback_script = Path.get_tibero_rollback_sql_file()
 		tb_connector = TiberoConnector()
-		tb_connector.execute_sql_script(rollback_script)
+		if tb_connector.connected:
+			rollback_script = Path.get_tibero_rollback_sql_file()
+			tb_connector.execute_sql_script(rollback_script)
+
 		os.remove(Path.get_odbc_ini_file())
 
 	testdb = TestDatabase()
@@ -422,11 +440,8 @@ def main():
 			config = upload_config_file()
 			prepare(config, args)
 			execute(config, args)
-	except Exception as e:
-		if not args.freeze_on_exception:
-			rollback()
-			raise e
 	finally:
+		print("\nTearing down...\n")
 		rollback()
 
 if __name__ == "__main__":
