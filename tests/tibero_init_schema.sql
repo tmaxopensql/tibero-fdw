@@ -335,4 +335,19 @@ BEGIN
                 flt FLOAT
                 )';
   EXECUTE IMMEDIATE ddl_query;
+
+  ddl_query := 'CREATE TABLE ins_test (
+                c1 INTEGER,
+                c2 VARCHAR(10), 
+                c3 CHAR(9), 
+                c4 NUMBER, 
+                c5 DATE, 
+                c6 NUMBER(10,5), 
+                c7 INTEGER, 
+                c8 INTEGER,
+                c9 NCHAR(9),
+                c10 VARCHAR2(100)
+                )';
+  EXECUTE IMMEDIATE ddl_query;
+
 END;

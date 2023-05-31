@@ -27,7 +27,6 @@ BEGIN;
       nc_eng_full NCHAR(2000),
       nc_spc_full NCHAR(2000)
   ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
-
   -- TEST 1
   SELECT is(
     (SELECT c_kor FROM ft8),
