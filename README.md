@@ -46,12 +46,7 @@ $ python -m pip install -r $TBFDW_HOME/tests/requirements.txt
 
 3. Run Tests
 
-In order to run tests, you need to set the connection strings for remote Tibero and local PostgreSQL as environment variables.
-```shell
-export TBFDW_TEST_TBCONN=\[connection string\]
-export TBFDW_TEST_PGCONN=\[connection string\]
-```
-Here connection string is of the format [host:port:dbname:user:password].
+In order to run tests, copy tests/tbfdw_test.conf.eg to tests/tbfdw_test.conf and fill in the parameter values of tests/tbfdw_test.conf.
 Now, On a project root directory, run below command to execute all test cases.
 
 ```shell

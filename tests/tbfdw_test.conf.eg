@@ -1,0 +1,16 @@
+# Configuration for TiberoFDW Test
+# Copy this file to this path as tbfdw_test.conf and fill in the parameters 
+
+# Connection info section for remote Tibero instance
+[tibero]
+host=
+port=
+dbname=
+user=
+
+# Connection info section for local Postgres instance
+# Superuser is required for creating test database
+[postgres]
+host=
+port=
+superuser=

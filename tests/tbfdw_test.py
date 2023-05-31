@@ -5,22 +5,11 @@ import subprocess
 import pyodbc
 import re
 import random
+import getpass
 
-CONN_STR_FORMAT = "host:port:dbname:user:password"
-NORMAL_CONN_STR_SIZE = len(CONN_STR_FORMAT.split(":"))
+ODBC_DSN = "tbfdw_tibero"
 
 class Arguments:
-	class ConnStringChecker(argparse.Action):
-		def __call__(self, parser, namespace, values, option_string=None):
-			if not str(values):
-				parser.error("More than one connection string is provided.")
-
-			connstr = values.split(":")
-			if len(connstr) != NORMAL_CONN_STR_SIZE:
-				parser.error(f"Wrong connection string format. Use {CONN_STR_FORMAT} format.")
-
-			setattr(namespace, self.dest, values)
-
 	def __init__(self):
 		self.arg_parser = argparse.ArgumentParser(
 			prog="python tbfdw_test.py",
@@ -90,31 +79,13 @@ class Arguments:
 			help="Freeze on exception. It will not rollback test environments on exception."
 		)
 
-		self.arg_parser.add_argument(
-			"--tb-conn",
-			metavar=f"{CONN_STR_FORMAT}",
-			dest="tbconn",
-			nargs="?",
-			action=self.ConnStringChecker,
-			help=("Connection string to remote Tibero server. "
-						"Must be set for the first run.")
-		)
-
-		self.arg_parser.add_argument(
-			"--pg-conn",
-			metavar=f"{CONN_STR_FORMAT}",
-			dest="pgconn",
-			nargs="?",
-			action=self.ConnStringChecker,
-			help=("Connection string to local PostgreSQL server. "
-						"Must be set for the first run.")
-		)
 	def parse(self):
 		return self.arg_parser.parse_args()
 
 class Path:
 	TEST_CONFIG_FILE_NAME = "tbfdw_test.conf"
-	TIBERO_INIT_SQL_FILE_NAME = "tibero_init.sql"
+	TIBERO_INIT_SCHEMA_SQL_FILE_NAME = "tibero_init_schema.sql"
+	TIBERO_INSERT_DATA_SQL_FILE_NAME = "tibero_insert_data.sql"
 	TIBERO_ROLLBACK_SQL_FILE_NAME = "tibero_rollback.sql"
 	ODBC_INI_FILE_NAME = "odbc.ini"
 	TBODBC_LIBRARY_FILE_NAME = "libtbodbc.so"
@@ -146,8 +117,12 @@ class Path:
 		return os.path.join(Path.get_test_home_dir(), Path.TEST_CONFIG_FILE_NAME)
 
 	@staticmethod
-	def get_tibero_init_sql_file():
-		return os.path.join(Path.get_test_home_dir(), Path.TIBERO_INIT_SQL_FILE_NAME)
+	def get_tibero_init_schema_sql_file():
+		return os.path.join(Path.get_test_home_dir(), Path.TIBERO_INIT_SCHEMA_SQL_FILE_NAME)
+
+	@staticmethod
+	def get_tibero_insert_data_sql_file():
+		return os.path.join(Path.get_test_home_dir(), Path.TIBERO_INSERT_DATA_SQL_FILE_NAME)
 
 	@staticmethod
 	def get_tibero_rollback_sql_file():
@@ -165,82 +140,6 @@ class Path:
 	def file_exists(path):
 		return os.path.isfile(path)
 
-class StatementConstructor:
-	def __init__(self, file_path):
-		self.file_path = file_path
-		self.file = open(file_path, "r")
-		self.stmt = []
-		self.eof = False
-		self.processing_pl = False
-
-	def __del__(self):
-		self.file.close()
-
-	def next(self):
-		if self.eof:
-			raise Exception(f"Reached end of file while reading {self.file_path}")
-
-		self.stmt.clear()
-		keep_reading = True
-		while keep_reading:
-			line = self.get_next_line_with_skipping_comments()
-			self.stmt.append(line)
-			if self.check_end_of_statement(line):
-				keep_reading = False
-			if self.check_end_of_file():
-				self.eof = True
-
-		stmt = "\n".join(self.stmt)
-		return stmt
-
-	def get_next_line_with_skipping_comments(self):
-		line = self.file.readline().strip()
-		line = self.skip_dash_comments(line)
-		line = self.skip_slash_comments(line)
-		return line
-
-	def skip_dash_comments(self, line):
-		find_dash = re.search(re.escape("--"), line)
-		if find_dash:
-			dash_pos = find_dash.span()[0]
-			if dash_pos > 0:
-				line = line[:dash_pos]
-			else:
-				while (re.search(re.escape("--"), line)):
-					line = self.file.readline().strip()
-
-		return line
-
-	def skip_slash_comments(self, line):
-		find_begin_slash = re.search(re.escape("/*"), line)
-		if find_begin_slash and not re.search(re.escape("/*+"), line):
-			fragments = []
-			begin_slash_pos = find_begin_slash.span()[0]
-			fragments.append(line[:begin_slash_pos])
-
-			keep_searching = True
-			while keep_searching:
-				line = self.file.readline().strip()
-				find_end_slash = re.search(re.escape("*/"), line)
-
-				if find_end_slash:
-					end_slash_pos = find_end_slash.span()[1]
-					fragments.append(line[end_slash_pos:])
-					keep_searching = False
-
-			line = "\n".join(fragments)
-
-		return line
-
-	def check_end_of_statement(self, line):
-		# TODO : Procedural language processing
-		return bool(re.search(";", line, re.IGNORECASE))
-
-	def check_end_of_file(self):
-		cur_pos = self.file.tell()
-		eof = False if bool(self.file.readline()) else True
-		self.file.seek(cur_pos)
-		return eof
 
 class Singleton(type):
 	_instances = {}
@@ -273,11 +172,11 @@ class TestDatabase(metaclass=Singleton):
 		self.port = config["postgres"]["port"]
 
 		createdb_command.append("-U")
-		createdb_command.append(config["postgres"]["user"])
-		self.user = config["postgres"]["user"]
+		createdb_command.append(config["postgres"]["superuser"])
+		self.user = config["postgres"]["superuser"]
 
 		createdb_command.append("-O")
-		createdb_command.append(config["postgres"]["user"])
+		createdb_command.append(config["postgres"]["superuser"])
 
 		createdb_command.append("-w")
 
@@ -304,41 +203,48 @@ class TestDatabase(metaclass=Singleton):
 		subprocess.run(dropdb_command)
 		self.created = False
 
-def create_config_file(tbconn, pgconn):
+class TiberoConnector(metaclass=Singleton):
+	def __init__(self):
+		self.connection = pyodbc.connect(f"DSN={ODBC_DSN}")
+
+	def __del__(self):
+		self.connection.close()
+
+	def __rep__(self):
+		return f"<TestDatabase dbname:{self.dbname} created:{self.created}"
+
+	def __str__(self):
+		return f"TestDatabase with name {self.dbname}"
+
+	def check_tibero_health(self):
+		cursor = self.connection.cursor()
+		cursor.execute("select 'success' from dual;")
+		row = cursor.fetchone()
+		if row[0] != "success":
+			raise Exception("Cannot connect to remote Tibero server")
+
+	def execute_sql_script(self, script):
+		cursor = self.connection.cursor()
+		with open(script) as file:
+			anon_block = file.read()
+			cursor.execute(anon_block)
+
+def upload_config_file():
 	config_file_path = Path.get_test_config_file()
-	if Path.file_exists(config_file_path):
-		os.remove(config_file_path)
-
-	write_conn_str_to_config_file("tibero", tbconn)
-	write_conn_str_to_config_file("postgres", pgconn)
-
-def write_conn_str_to_config_file(section, conn_str):
-	config_file_path = Path.get_test_config_file()
-	conn_str_split = conn_str.split(":")
-
-	if len(conn_str_split) != NORMAL_CONN_STR_SIZE:
-		raise Exception("Wrong connection string format")
-
-	config_file = open(config_file_path, "a")
-	config_file.write(f"[{section}]\n")
-	config_file.write(f"host={conn_str_split[0]}\n")
-	config_file.write(f"port={conn_str_split[1]}\n")
-	config_file.write(f"dbname={conn_str_split[2]}\n")
-	config_file.write(f"user={conn_str_split[3]}\n")
-	config_file.write(f"password={conn_str_split[4]}\n")
-	config_file.write("\n")
-	config_file.close()
-
-def upload_config_file(init_config, tbconn, pgconn):
-	config_file_path = Path.get_test_config_file()
-
-	if init_config or not Path.file_exists(config_file_path):
-		if not tbconn or not pgconn:
-			raise Exception("You need to initialize connection info on the first run.")
-		create_config_file(tbconn, pgconn)
+	if not Path.file_exists(config_file_path):
+		raise Exception("Cannot find config file")
 
 	config = configparser.ConfigParser()
 	config.read(config_file_path)
+
+	tb_user = config["tibero"]["user"]
+	tb_passwd = getpass.getpass(f"Password for Tibero User ({tb_user}): ")
+	config["tibero"]["password"] = tb_passwd
+
+	pg_user = config["postgres"]["superuser"]
+	pg_passwd = getpass.getpass(f"Password for Postgres Superuser ({pg_user}): ")
+	config["postgres"]["password"] = pg_passwd
+
 	return config
 
 def show_list_of_test_cases():
@@ -389,8 +295,8 @@ def create_odbc_ini_file(config):
 
 	with open(odbc_ini_file_path, "w") as odbc_ini:
 		odbc_ini.write("[ODBC Data Source]\n")
-		odbc_ini.write("tbfdw_tibero = Tibero ODBC Driver\n")
-		odbc_ini.write("[tbfdw_tibero]\n")
+		odbc_ini.write(f"{ODBC_DSN} = Tibero ODBC Driver\n")
+		odbc_ini.write(f"[{ODBC_DSN}]\n")
 		odbc_ini.write(f"Driver = {Path.get_tbodbc_lib_file()}\n")
 		odbc_ini.write("Description = Tibero ODBC Driver\n")
 		odbc_ini.write(f"Server = {config['tibero']['host']}\n")
@@ -410,26 +316,18 @@ def set_tbcli_env_vars(trace_tbcli):
 		os.environ["TBCLI_LOG_DIR"] = Path.get_test_logs_dir()
 
 def check_tibero_health():
-	with pyodbc.connect("DSN=tbfdw_tibero") as conn:
-		cursor = conn.cursor()
-		cursor.execute("select 'success' from dual;")
-		row = cursor.fetchone()
-		if row[0] != "success":
-			raise Exception("Cannot connect to remote Tibero server")
+	tb_connector = TiberoConnector()
+	tb_connector.check_tibero_health()
 
 def initialize_tibero_test_schema():
 	print("Initializing test schema in the remote Tibero server.")
 	print("This might take a while...")
 
-	conn = pyodbc.connect("DSN=tbfdw_tibero")
-	cursor = conn.cursor()
-
-	sql_script = Path.get_tibero_init_sql_file()
-	stmt_constructor = StatementConstructor(sql_script)
-
-	while not stmt_constructor.eof:
-		stmt = stmt_constructor.next()
-		cursor.execute(stmt)
+	init_schema_script = Path.get_tibero_init_schema_sql_file()
+	insert_data_script = Path.get_tibero_insert_data_sql_file()
+	tb_connector = TiberoConnector()
+	tb_connector.execute_sql_script(init_schema_script)
+	tb_connector.execute_sql_script(insert_data_script)
 
 	print("Done.")
 
@@ -483,7 +381,7 @@ def get_pgtap_command(config, args):
 	pgtap_command.append(TestDatabase().dbname)
 
 	pgtap_command.append("--username")
-	pgtap_command.append(config["postgres"]["user"])
+	pgtap_command.append(config["postgres"]["superuser"])
 
 	pgtap_command.append("--set")
 	pgtap_command.append("TIBERO_HOST=" + config["tibero"]["host"])
@@ -504,15 +402,9 @@ def get_pgtap_command(config, args):
 
 def rollback():
 	if Path.file_exists(Path.get_odbc_ini_file()):
-		conn = pyodbc.connect("DSN=tbfdw_tibero")
-		cursor = conn.cursor()
 		rollback_script = Path.get_tibero_rollback_sql_file()
-		stmt_constructor = StatementConstructor(rollback_script)
-
-		while not stmt_constructor.eof:
-			stmt = stmt_constructor.next()
-			cursor.execute(stmt)
-
+		tb_connector = TiberoConnector()
+		tb_connector.execute_sql_script(rollback_script)
 		os.remove(Path.get_odbc_ini_file())
 
 	testdb = TestDatabase()
@@ -527,7 +419,7 @@ def main():
 		if args.show_list:
 			show_list_of_test_cases()
 		else:
-			config = upload_config_file(args.init_config, args.tbconn, args.pgconn)
+			config = upload_config_file()
 			prepare(config, args)
 			execute(config, args)
 	except Exception as e:

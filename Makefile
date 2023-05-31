@@ -15,6 +15,4 @@ PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
 test:
-	python ${TBFDW_HOME}/tests/tbfdw_test.py --init --quiet \
-		--tb-conn ${TBFDW_TEST_TBCONN}\
-		--pg-conn ${TBFDW_TEST_PGCONN}
+	python ${TBFDW_HOME}/tests/tbfdw_test.py --quiet \
