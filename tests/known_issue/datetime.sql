@@ -8,11 +8,11 @@ BEGIN;
   CREATE EXTENSION IF NOT EXISTS tibero_fdw;
 
   CREATE SERVER server_name FOREIGN DATA WRAPPER tibero_fdw
-    OPTIONS (host :TIBERO_HOST, port :TIBERO_PORT, dbname :TIBERO_DB);
+    OPTIONS (host :'TIBERO_HOST', port :'TIBERO_PORT', dbname :'TIBERO_DB');
 
   CREATE USER MAPPING FOR current_user
     SERVER server_name
-    OPTIONS (username :TIBERO_USER, password :TIBERO_PASS);
+    OPTIONS (username :'TIBERO_USER', password :'TIBERO_PASS');
 
   CREATE FOREIGN TABLE d_ft1 (
       dt DATE,
@@ -34,7 +34,7 @@ BEGIN;
       tslz6 TIMESTAMP WITH TIME ZONE,
       tslz_bc TIMESTAMP WITH TIME ZONE,
       tslz_ad TIMESTAMP WITH TIME ZONE
-  ) SERVER server_name OPTIONS (owner_name :TIBERO_USER, table_name 't3');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't3');
 
   -- Below cases deal with the 'sYYYY'-formatted signed year of Tibero DBMS, 
   -- which will be supported only after pushdown for PROJECTION is implemented.

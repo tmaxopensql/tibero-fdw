@@ -229,9 +229,9 @@ BEGIN;
 
   -- TEST 14
   SELECT results_eq('
-    SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng 
-      FROM jft1 JT1 
-        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng) 
+    SELECT JT1.vc_eng, JT2.vc_eng, JT3.vc_eng
+      FROM jft1 JT1
+        FULL JOIN jft2 JT2 ON (JT1.vc_eng = JT2.vc_eng)
         RIGHT JOIN jft3 JT3 ON (JT2.vc_eng = JT3.vc_eng)',
     $$VALUES (
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100),
@@ -239,12 +239,12 @@ BEGIN;
       'abcdefghijklmnopqrstuvwxyz'::VARCHAR(100)
     )$$,
     'Verify query results for FULL OUTER JOIN with RIGHT OUTER JOIN multiple foreign table query'
-  ); 
+  );
 
   -- TEST 15
   SELECT results_eq('
-    SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc FROM jft1 JT1 
-      RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor) 
+    SELECT JT1.vc2_kor, JT2.vc2_eng, JT3.vc2_spc FROM jft1 JT1
+      RIGHT JOIN jft2 JT2 ON (JT1.vc2_kor = JT2.vc2_kor)
       FULL JOIN jft3 JT3 ON (JT2.vc2_kor = JT3.vc2_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::VARCHAR(100),
@@ -256,9 +256,9 @@ BEGIN;
 
   -- TEST 16
   SELECT results_eq(
-    'SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc 
-       FROM jft1 JT1 
-         FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor) 
+    'SELECT JT1.nvc_kor, JT2.nvc_eng, JT3.nvc_spc
+       FROM jft1 JT1
+         FULL JOIN jft2 JT2 ON (JT1.nvc_kor = JT2.nvc_kor)
          LEFT JOIN jft3 JT3 ON (JT2.nvc_kor = JT3.nvc_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::TEXT,
@@ -270,9 +270,9 @@ BEGIN;
 
   -- TEST 17
   SELECT results_eq('
-    SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor) 
+    SELECT JT1.nc_kor, JT2.nc_eng, JT3.nc_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.nc_kor = JT2.nc_kor)
         FULL JOIN jft3 JT3 ON (JT2.nc_kor = JT3.nc_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::NCHAR(100),
@@ -284,9 +284,9 @@ BEGIN;
 
   -- TEST 18
   SELECT results_eq('
-    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        RIGHT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         LEFT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::CHAR(100),
@@ -298,9 +298,9 @@ BEGIN;
 
   -- TEST 19
   SELECT results_eq('
-    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc 
-      FROM jft1 JT1 
-        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor) 
+    SELECT JT1.c_kor, JT2.c_eng, JT3.c_spc
+      FROM jft1 JT1
+        LEFT JOIN jft2 JT2 ON (JT1.c_kor = JT2.c_kor)
         RIGHT JOIN jft3 JT3 ON (JT2.c_kor = JT3.c_kor)',
     $$VALUES (
       '가나다라마바사아자차카타파하'::CHAR(100),
@@ -312,9 +312,9 @@ BEGIN;
 
   -- TEST 20
   SELECT results_eq('
-    SELECT JT1.flt, JT2.flt 
-      FROM jft1 JT1 
-      CROSS JOIN jft2 JT2 
+    SELECT JT1.flt, JT2.flt
+      FROM jft1 JT1
+      CROSS JOIN jft2 JT2
     ORDER BY JT1.flt, JT2.flt',
     $$VALUES (
       123456.123456789::FLOAT,

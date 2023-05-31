@@ -27,7 +27,6 @@ BEGIN;
       nc_eng_full NCHAR(2000),
       nc_spc_full NCHAR(2000)
   ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
-  
   -- TEST 1
   SELECT is(
     (SELECT c_kor FROM ft8),
@@ -48,14 +47,14 @@ BEGIN;
     '!@#$%^&*()<>/\\''',
     'Check SELECT special characters'
   );
-  
+
   -- TEST 4
   SELECT row_eq(
     $$SELECT * FROM ft8 LIMIT 1$$,
-    ROW('가'::char, 'a'::char, '!'::char, 
+    ROW('가'::char, 'a'::char, '!'::char,
       '가나다라마바사아자차카타파하'::char(2000),
-      'abcdefghijklmnopqrstuvwxyz'::char(2000), 
-      '!@#$%^&*()<>/\\'''::char(2000), 
+      'abcdefghijklmnopqrstuvwxyz'::char(2000),
+      '!@#$%^&*()<>/\\'''::char(2000),
       '가'::char, 'a'::char, '!'::char,
       '가나다라마바사아자차카타파하'::char(2000),
       'abcdefghijklmnopqrstuvwxyz'::char(2000),

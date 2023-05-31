@@ -261,7 +261,7 @@ BEGIN;
     ]
   );
 
-  -- TEST 20: abs() function 
+  -- TEST 20: abs() function
   SELECT results_eq('
     SELECT abs(nb_default) FROM math_func_test_table',
     ARRAY[
