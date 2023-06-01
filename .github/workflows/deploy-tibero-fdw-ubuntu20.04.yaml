@@ -32,8 +32,7 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         make USE_PGXS=1
-      
-        
+
     - name: Checkout deploy replository
       uses: actions/checkout@v2
       with:
