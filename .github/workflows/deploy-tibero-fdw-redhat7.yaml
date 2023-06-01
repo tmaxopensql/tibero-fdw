@@ -15,7 +15,7 @@ jobs:
   deploy-tibero-fdw-redhat7:
     runs-on: ubuntu-20.04
     container:
-      image: registry.redhat.io/rhel7
+      image: centos:7
     
     steps:      
     - name: home
