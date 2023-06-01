@@ -16,14 +16,14 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: centos:8
-    
+
     steps:      
     - name: home
       run: |
         cd /home
         sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
         sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
-      
+
     - name: Install PostgreSQL
       run: |
         dnf update -y
@@ -32,16 +32,16 @@ jobs:
         dnf -y group install "Development Tools"
         dnf -qy module disable postgresql
         dnf install -y postgresql14-server postgresql14-devel      
-          
+
     - name: Checkout repository
       uses: actions/checkout@v2
-        
+
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         export PATH=/usr/pgsql-14/bin:$PATH
         make USE_PGXS=1
-        
+
     - name: Checkout deploy repository
       uses: actions/checkout@v2
       with:
@@ -49,7 +49,7 @@ jobs:
         ref: main
         token: ${{ secrets.git-access-token }}
         path: tibero-fdw-dist
-      
+
     - name: Deploy to tibero-fdw-dist
       run: |
         cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
@@ -58,15 +58,12 @@ jobs:
         cp *.sql tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp Makefile tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp setenv.sh tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r sql/ tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r expected/ tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp -r tests/ tibero-fdw-dist/${{ env.BUILD_OS }}/
         cd lib/
         cp * ../tibero-fdw-dist/${{ env.BUILD_OS }}/lib/
         cd ..
         ls
-        
-        
-        
+
     - name: Initialize Git repository
       run: |
         cd tibero-fdw-dist/
@@ -76,8 +73,7 @@ jobs:
         git config --global user.name "${{ github.actor }}"
         git config --list
         git remote -v
-        
-    
+
     - name: git push
       run: |
         ls
