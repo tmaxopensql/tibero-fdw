@@ -21,10 +21,11 @@ jobs:
     secrets: 
       git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
 
-  deploy-tibero-fdw-redhat7:
-    uses: ./.github/workflows/deploy-tibero-fdw-redhat7.yaml
-    secrets: 
-      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
+# Blocking Redhat 7 due to lack of reliable Redhat 7 Docker Image
+#  deploy-tibero-fdw-redhat7:
+#    uses: ./.github/workflows/deploy-tibero-fdw-redhat7.yaml
+#    secrets: 
+#      git-access-token: ${{ secrets.HYPERSQL_GITHUB_ACCESS_TOKEN }}
 
   deploy-tibero-fdw-redhat8:
     uses: ./.github/workflows/deploy-tibero-fdw-redhat8.yaml
