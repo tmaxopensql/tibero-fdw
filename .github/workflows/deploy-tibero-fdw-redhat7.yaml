@@ -15,7 +15,7 @@ jobs:
   deploy-tibero-fdw-redhat7:
     runs-on: ubuntu-20.04
     container:
-      image: centos:7
+      image: registry.redhat.io/rhel7
     
     steps:      
     - name: home
@@ -50,19 +50,17 @@ jobs:
     - name: Deploy to tibero-fdw-dist
       run: |
         cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp *.bc tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp tibero_fdw.control tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp *.sql tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp Makefile tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp setenv.sh tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r sql/ tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r expected/ tibero-fdw-dist/${{ env.BUILD_OS }}/
+        cp -r tests/ tibero-fdw-dist/${{ env.BUILD_OS }}/
         cd lib/
         cp * ../tibero-fdw-dist/${{ env.BUILD_OS }}/lib/
         cd ..
         ls
-        
-        
-        
+
     - name: Initialize Git repository
       run: |
         cd tibero-fdw-dist/
@@ -72,8 +70,7 @@ jobs:
         git config --global user.name "${{ github.actor }}"
         git config --list
         git remote -v
-        
-    
+
     - name: git push
       run: |
         ls
