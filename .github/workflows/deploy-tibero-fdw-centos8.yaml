@@ -31,7 +31,7 @@ jobs:
         dnf install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
         dnf -y group install "Development Tools"
         dnf -qy module disable postgresql
-        dnf install -y postgresql14-server postgresql14-devel      
+        dnf install -y --nobest postgresql14-server postgresql14-devel      
 
     - name: Checkout repository
       uses: actions/checkout@v2
