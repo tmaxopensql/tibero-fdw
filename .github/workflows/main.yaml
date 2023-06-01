@@ -3,6 +3,7 @@ name: Main action
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   deploy-tibero-fdw-ubuntu:
