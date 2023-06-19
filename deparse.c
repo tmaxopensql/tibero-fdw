@@ -111,13 +111,11 @@ static inline SubqueryVarInfo get_subquery_info_from_var(Var *, RelOptInfo *);
 static inline bool check_var_is_subquery(SubqueryVarInfo);
 
 static inline void deparse_operator_name(StringInfo, Form_pg_operator);
-static inline bool check_tibero_handles_pg_data_type(Oid);
 static inline void deparse_datum(StringInfo, Datum, Oid data_type);
 static inline void deparse_numeric_datum(StringInfo, Datum, regproc typoutput);
 static inline void deparse_date_datum(StringInfo, Datum);
 static inline void deparse_ts_datum(StringInfo, Datum);
 static inline void deparse_ts_tz_datum(StringInfo, Datum);
-static inline void deparse_interval_datum(StringInfo, Datum);
 static inline void deparse_string_datum(StringInfo, Datum, regproc typoutput);
 static inline void deparse_generic_datum(StringInfo, Datum);
 static inline void deparse_string_literal(StringInfo, const char *);
@@ -496,8 +494,6 @@ deparse_expr_for_T_Const(Node *expr, DeparseContext *context)
 	Const *constant = (Const *) expr;
 	StringInfo	buf = remote_sql_get_buffer(&context->remote_sql);
 
-	Assert(check_tibero_handles_pg_data_type(constant->consttype));
-
 	if (constant->constisnull)
 	{
 		appendStringInfoString(buf, "NULL");
@@ -506,39 +502,6 @@ deparse_expr_for_T_Const(Node *expr, DeparseContext *context)
 	{
 		deparse_datum(buf, constant->constvalue, constant->consttype);
 	}
-}
-
-static inline bool
-check_tibero_handles_pg_data_type(Oid typeid)
-{
-	bool can_handle = false;
-
-	switch (typeid)
-	{
-		case INT2OID:
-		case INT4OID:
-		case INT8OID:
-		case OIDOID:
-		case FLOAT4OID:
-		case FLOAT8OID:
-		case NUMERICOID:
-		case DATEOID:
-		case TIMESTAMPOID:
-		case TIMESTAMPTZOID:
-		case INTERVALOID:
-		case UUIDOID:
-		case TEXTOID:
-		case CHAROID:
-		case BPCHAROID:
-		case VARCHAROID:
-		case NAMEOID:
-			can_handle = true;
-			break;
-		default:
-			break;
-	}
-
-	return can_handle;
 }
 
 static inline void
@@ -576,9 +539,6 @@ deparse_datum(StringInfo buf, Datum datum, Oid data_type)
 		case TIMESTAMPTZOID:
 			deparse_ts_tz_datum(buf, datum);
 			break;
-		case INTERVALOID:
-			deparse_interval_datum(buf, datum);
-			break;
 		case UUIDOID:
 		case TEXTOID:
 		case CHAROID:
@@ -587,6 +547,8 @@ deparse_datum(StringInfo buf, Datum datum, Oid data_type)
 		case NAMEOID:
 			deparse_string_datum(buf, datum, typoutput);
 			break;
+		case INTERVALOID:
+		/* TODO: Need to develop deparsing logic for interval type */
 		default:
 			deparse_generic_datum(buf, datum);
 			break;
@@ -621,7 +583,7 @@ deparse_date_datum(StringInfo buf, Datum datum)
 
 	initStringInfo(&date_val);
 	appendStringInfo(&date_val, "%04d-%02d-%02d",
-									 datetime_tm.tm_year > 0 ? datetime_tm.tm_year : -datetime_tm.tm_year + 1,
+									 datetime_tm.tm_year,
 									 datetime_tm.tm_mon,
 									 datetime_tm.tm_mday);
 
@@ -652,7 +614,7 @@ deparse_ts_datum(StringInfo buf, Datum datum)
 	initStringInfo(&ts_val);
 	appendStringInfo(&ts_val,
 									 "%04d-%02d-%02d %02d:%02d:%02d.%06d",
-									 datetime_tm.tm_year > 0 ? datetime_tm.tm_year : -datetime_tm.tm_year + 1,
+									 datetime_tm.tm_year,
 									 datetime_tm.tm_mon, datetime_tm.tm_mday, datetime_tm.tm_hour,
 									 datetime_tm.tm_min, datetime_tm.tm_sec, (int32)datetime_fsec);
 
@@ -684,18 +646,12 @@ deparse_ts_tz_datum(StringInfo buf, Datum datum)
 	initStringInfo(&ts_val);
 	appendStringInfo(&ts_val,
 									 "%04d-%02d-%02d %02d:%02d:%02d.%06d%+03d:%02d",
-									 datetime_tm.tm_year > 0 ? datetime_tm.tm_year : -datetime_tm.tm_year + 1,
+									 datetime_tm.tm_year,
 									 datetime_tm.tm_mon, datetime_tm.tm_mday, datetime_tm.tm_hour,
 									 datetime_tm.tm_min, datetime_tm.tm_sec, (int32)datetime_fsec,
 									 -tzoffset / 3600, ((tzoffset > 0) ? tzoffset % 3600 : -tzoffset % 3600) / 60);
 
 	appendStringInfo(buf, "TO_TIMESTAMP_TZ('%s', 'SYYYY-MM-DD HH24:MI:SS.FF TZH:TZM')", ts_val.data);
-}
-
-static inline void
-deparse_interval_datum(StringInfo buf, Datum datum)
-{
-	/* TODO: Not Implemented */
 }
 
 static inline void
