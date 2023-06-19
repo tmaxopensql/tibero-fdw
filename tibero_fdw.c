@@ -509,7 +509,10 @@ tibero_convert_to_pg(Oid pgtyp, int pgtypmod, TbColumn *column, int tuple_idx)
 
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pgtyp));
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for type%u", pgtyp);
+	{
+		ereport(ERROR, (errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
+						errmsg("cache lookup failed for type: %u", pgtyp)));
+	}
 
 	typeinput = ((Form_pg_type) GETSTRUCT(tuple))->typinput;
 	ReleaseSysCache(tuple);

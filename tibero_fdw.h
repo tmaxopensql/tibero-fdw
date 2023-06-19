@@ -83,5 +83,6 @@ extern void deparse_insert_sql(StringInfo buf, PlannerInfo *root, Index rtindex,
 extern void register_signal_handlers(void);
 extern void set_sleep_on_sig_on(void);
 extern void set_sleep_on_sig_off(void);
+extern bool check_oid_builtin(Oid object_id);
 
 #endif							/* TIBERO_FDW_H */

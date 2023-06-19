@@ -14,8 +14,8 @@
 #include "postgres.h"
 #include "tibero_fdw.h"
 #include "access/sysattr.h"
-#include "access/transam.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_operator.h"
 #include "optimizer/optimizer.h"
 
 typedef enum
@@ -75,7 +75,6 @@ static inline void inspect_for_T_FuncExpr_internal(InspectionContext *, FuncExpr
 
 static inline bool check_func_expr_compatible_with_tibero(FuncExprInfo *func_oid);
 static inline bool check_aggr_expr_compatible_with_tibero(Oid aggr_oid);
-static inline bool check_expr_builtin(Oid object_id);
 
 static inline void compare_collation_with_current_state(InspectionContext *, Oid);
 static inline TbFDWCollationState deduce_collation_state_from_collation(InspectionContext *, Oid);
@@ -152,13 +151,9 @@ start_inspection(Node *expr, InspectionContext *context)
 	{
 		case T_Var:
 			INSPECT_EXPR(T_Var, expr, context);
-			/* FIXME: develop deparsing logic and turn on the flag */
-			context->shippable = false;
 			break;
 		case T_Const:
 			INSPECT_EXPR(T_Const, expr, context);
-			/* FIXME: develop deparsing logic and turn on the flag */
-			context->shippable = false;
 			break;
 		case T_Param:
 			INSPECT_EXPR(T_Param, expr, context);
@@ -172,8 +167,6 @@ start_inspection(Node *expr, InspectionContext *context)
 			break;
 		case T_OpExpr:
 			INSPECT_EXPR(T_OpExpr, expr, context);
-			/* FIXME: develop deparsing logic and turn on the flag */
-			context->shippable = false;
 			break;
 		case T_DistinctExpr:
 			INSPECT_EXPR(T_DistinctExpr, expr, context);
@@ -197,8 +190,6 @@ start_inspection(Node *expr, InspectionContext *context)
 			break;
 		case T_List:
 			INSPECT_EXPR(T_List, expr, context);
-			/* FIXME: develop deparsing logic and turn on the flag */
-			context->shippable = false;
 			break;
 		case T_Aggref:
 			INSPECT_EXPR(T_Aggref, expr, context);
@@ -218,7 +209,14 @@ inspect_for_T_Var(Node *expr, InspectionContext *context)
 
 	if (bms_is_member(var->varno, context->relids) && var->varlevelsup == 0)
 	{
+		/* System attributes are not shippable except for ROWID (CTID) */
 		if (var->varattno < 0 && var->varattno != SelfItemPointerAttributeNumber)
+		{
+			context->shippable = false;
+		}
+
+		/* Whole row reference is not shippable */
+		if (var->varattno == 0)
 		{
 			context->shippable = false;
 		}
@@ -283,23 +281,33 @@ inspect_for_T_FuncExpr_internal(InspectionContext *context, FuncExprInfo *func_i
 	compare_collation_with_current_state(context, func_info->func_collid);
 }
 
+/* TODO: Cannot find the following OID in pg_operator macros */
+#define TB_FDW_OID_MODULO_OP 530
+
 static inline bool
 check_func_expr_compatible_with_tibero(FuncExprInfo *func_info)
 {
-	if (!check_expr_builtin(func_info->func_oid))
+	bool compatible = true;
+
+	if (!check_oid_builtin(func_info->func_oid))
 	{
 		return false;
 	}
 
 	/* TODO: Which PG builtin functions are compatible with Tibero? */
-
-	return true;
-}
-
-static inline bool
-check_expr_builtin(Oid object_id)
-{
-	return (object_id < FirstGenbkiObjectId);
+	switch (func_info->func_oid)
+	{
+		/* PostgreSQL's regexp operator is '~' whereas Tibero uses REGEXP function */
+		case OID_BPCHAR_REGEXEQ_OP:
+		/* PostgreSQL's modulo operator is '%' whereas Tibero uses MOD function */
+		case TB_FDW_OID_MODULO_OP:
+			compatible = false;
+			break;
+		default:
+			/* compatible */
+			break;
+	}
+	return compatible;
 }
 
 static inline void
@@ -410,7 +418,7 @@ inspect_for_T_Aggref(Node *expr, InspectionContext *context)
 static inline bool
 check_aggr_expr_compatible_with_tibero(Oid aggr_oid)
 {
-	if (!check_expr_builtin(aggr_oid))
+	if (!check_oid_builtin(aggr_oid))
 	{
 		return false;
 	}

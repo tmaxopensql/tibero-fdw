@@ -14,7 +14,7 @@
 #include "postgres.h"
 #include "port.h"																	/* pqsigfunc																		*/
 #include "libpq/pqsignal.h"												/* pqsignal																			*/
-
+#include "access/transam.h"												/* FirstGenbkiObjectId													*/
 /* {{{ global variables ***************************************************************************/
 
 /* TODO PG_SIGNAL_COUNT */
@@ -35,6 +35,8 @@ static void sigsegv_handler(int signo);
 static void sigbus_handler(int signo);
 static void sigabrt_handler(int signo);
 static void sigfpe_handler(int signo);
+
+bool check_oid_builtin(Oid object_id);
 
 inline void
 set_sleep_on_sig_on(void)
@@ -110,4 +112,11 @@ sleep_on_sig(int signo)
 	while (use_sleep_on_sig) {
 		pg_usleep(100000);
 	}
+}
+
+
+bool
+check_oid_builtin(Oid object_id)
+{
+	return (object_id < FirstGenbkiObjectId);
 }
