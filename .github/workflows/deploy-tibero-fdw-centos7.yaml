@@ -17,38 +17,30 @@ jobs:
     container:
       image: centos:7
 
-    steps:      
-    - name: home
-      run: |
-        cd /home  
-
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 #required for getting the latest tag
+    
     - name: Install PostgreSQL
       run: |
         yum update -y
         yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
         yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
         yum install -y centos-release-scl-rh epel-release devtoolset-7 llvm-toolset-7 llvm-toolset-7-llvm-static make gcc git
-        yum install -y postgresql14 postgresql14-server postgresql14-devel      
-
-    - name: Checkout repository
-      uses: actions/checkout@v2
+        yum install -y postgresql14 postgresql14-server postgresql14-devel    
 
     - name: Build tibero-fdw 
       run: |
+        cd /home
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         export PATH=/usr/pgsql-14/bin:$PATH
         make USE_PGXS=1
  
-    - name: Checkout deploy repository
-      uses: actions/checkout@v2
-      with:
-        repository: ${{ env.DEPLOY_REPO }}
-        ref: main
-        token: ${{ secrets.git-access-token }}
-        path: tibero-fdw-dist
-
     - name: Deploy to tibero-fdw-dist
       run: |
+        mkdir /home/tibero-fdw-
         cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp *.bc tibero-fdw-dist/${{ env.BUILD_OS }}/
         cp tibero_fdw.control tibero-fdw-dist/${{ env.BUILD_OS }}/
