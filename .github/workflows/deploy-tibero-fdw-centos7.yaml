@@ -8,8 +8,8 @@ on:
         required: true
 
 env:
-  DEPLOY_REPO: tmaxopensql/tibero-fdw-dist
   BUILD_OS: centos7
+  BUILD_DIR: /home/tibero-fdw-dist-centos7
 
 jobs:
   deploy-tibero-fdw-centos7:
@@ -22,6 +22,12 @@ jobs:
       uses: actions/checkout@v3
       with:
         fetch-depth: 0 #required for getting the latest tag
+    
+    - name: Get the latest release tag
+      id: latest_release
+      uses: WyriHaximus/github-action-get-previous-tag@v1
+      with:
+        fallback: 1.0.0
     
     - name: Install PostgreSQL
       run: |
@@ -40,18 +46,18 @@ jobs:
  
     - name: Deploy to tibero-fdw-dist
       run: |
-        mkdir /home/tibero-fdw-
-        cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp *.bc tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp tibero_fdw.control tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp *.sql tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp Makefile tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp setenv.sh tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r tests/ tibero-fdw-dist/${{ env.BUILD_OS }}/
+        mkdir ${{ env.BUILD_DIR }}/
+        mkdir ${{ env.BUILD_DIR }}/lib
+        cp tibero_fdw.so ${{ env.BUILD_DIR }}/
+        cp *.bc ${{ env.BUILD_DIR }/
+        cp tibero_fdw.control ${{ env.BUILD_DIR }/
+        cp *.sql ${{ env.BUILD_DIR }/
+        cp Makefile ${{ env.BUILD_DIR }/
+        cp setenv.sh ${{ env.BUILD_DIR }/
+        cp -r tests/ ${{ env.BUILD_DIR }/
         cd lib/
-        cp * ../tibero-fdw-dist/${{ env.BUILD_OS }}/lib/
-        cd ..
-        ls
+        cp * ${{ env.BUILD_DIR }/lib/
+        zip /home/tibero-fdw-${{ steps.latest_release.outputs.tag }}-centos7
 
     - name: Initialize Git repository
       run: |
