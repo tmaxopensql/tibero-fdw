@@ -39,19 +39,19 @@ jobs:
  
     - name: Make dist zip file
       run: |
-        mkdir ${{ env.BUILD_PATH }}
-        mkdir ${{ env.BUILD_PATH }}/lib
-        cp $GITHUB_WORKSPACE/tibero_fdw.so ${{ env.BUILD_PATH }}
-        cp $GITHUB_WORKSPACE/*.bc ${{ env.BUILD_PATH }}
-        cp $GITHUB_WORKSPACE/tibero_fdw.control ${{ env.BUILD_PATH }}
-        cp $GITHUB_WORKSPACE/*.sql ${{ env.BUILD_PATH }}
-        cp $GITHUB_WORKSPACE/Makefile ${{ env.BUILD_PATH }}
-        cp $GITHUB_WORKSPACE/setenv.sh ${{ env.BUILD_PATH }}
-        cp -r $GITHUB_WORKSPACE/tests/ ${{ env.BUILD_PATH }}
-        cp -r $GITHUB_WORKSPACE/lib/ ${{ env.BUILD_PATH }}
-        cd ${{ env.BUILD_PATH }}
-        yum install -y zip
-        cd ${{ env.BUILD_PATH }} && zip -r ${{ env.ZIP_FILE_PATH }} .
+        sudo mkdir ${{ env.BUILD_PATH }}
+        sudo mkdir ${{ env.BUILD_PATH }}/lib
+        sudo cp $GITHUB_WORKSPACE/tibero_fdw.so ${{ env.BUILD_PATH }}
+        sudo cp $GITHUB_WORKSPACE/*.bc ${{ env.BUILD_PATH }}
+        sudo cp $GITHUB_WORKSPACE/tibero_fdw.control ${{ env.BUILD_PATH }}
+        sudo cp $GITHUB_WORKSPACE/*.sql ${{ env.BUILD_PATH }}
+        sudo cp $GITHUB_WORKSPACE/Makefile ${{ env.BUILD_PATH }}
+        sudo cp $GITHUB_WORKSPACE/setenv.sh ${{ env.BUILD_PATH }}
+        sudo cp -r $GITHUB_WORKSPACE/tests/ ${{ env.BUILD_PATH }}
+        sudo cp -r $GITHUB_WORKSPACE/lib/ ${{ env.BUILD_PATH }}
+        sudo cd ${{ env.BUILD_PATH }}
+        sudo apt-get install -y zip
+        sudo cd ${{ env.BUILD_PATH }} && sudo zip -r ${{ env.ZIP_FILE_PATH }} .
 
     - name: Upload release asset
       uses: actions/upload-release-asset@v1
