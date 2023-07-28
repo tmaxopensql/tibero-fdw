@@ -16,13 +16,13 @@ $ . ./setenv.sh `pwd`
 ## Compile the code using make
 $ make
 
-## Install Tibero foreign data wrapper
+## Install Tibero FDW
 $ make install
 ```
 
 Testing
 ---------
-Tibero Foreign Data Wrapper depends on [pgTAP](https://pgtap.org/) as a testing framework. To test Tibero Foreign Data Wrapper, you need pgTAP installed on local PostgreSQL server, and a running remote Tibero Database server and access privilege to its system catalog.
+Tibero FDW depends on [pgTAP](https://pgtap.org/) as a testing framework. To test Tibero FDW, you need pgTAP installed on local PostgreSQL server, and a running remote Tibero Database server with access privilege to its system catalog.
 
 1. Install pgTAP and Its Dependencies
 ```shell
