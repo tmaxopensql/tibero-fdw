@@ -16,4 +16,4 @@ jobs:
     with:
       RELEASE_NOTE: ${{ github.event.pull_request.body }}
     secrets:
-      GIT_ACCESS_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+      GIT_ACCESS_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
