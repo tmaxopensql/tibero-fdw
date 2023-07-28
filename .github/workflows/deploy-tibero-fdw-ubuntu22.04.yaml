@@ -1,20 +1,18 @@
-name: deploy-tibero-fdw-centos8
+name: deploy-tibero-fdw-ubuntu20
 
 on:
   release:
     types: [published]
 
 env:
-  BUILD_OS: centos8
-  ASSET_NAME: tibero-fdw-dist-centos8
-  BUILD_PATH: /home/tibero-fdw-dist-centos8
-  ZIP_FILE_PATH: /home/tibero-fdw-dist-centos8.zip
+  BUILD_OS: ubuntu22
+  ASSET_NAME: tibero-fdw-dist-ubuntu22
+  BUILD_PATH: /home/tibero-fdw-dist-ubuntu22
+  ZIP_FILE_PATH: /home/tibero-fdw-dist-ubuntu22.zip
 
 jobs:
-  deploy-tibero-fdw-centos8:
-    runs-on: ubuntu-20.04
-    container:
-      image: centos:8
+  deploy-tibero-fdw-ubuntu22:
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository
@@ -28,19 +26,14 @@ jobs:
   
     - name: Install PostgreSQL
       run: |
-        sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
-        sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
-        dnf update -y
-        dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        dnf install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
-        dnf -y group install "Development Tools"
-        dnf -qy module disable postgresql
-        dnf install -y --nobest postgresql14-server postgresql14-devel      
+        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+        sudo apt-get update -y
+        sudo apt-get install -y postgresql-14 postgresql-contrib-14 postgresql-server-dev-14
 
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
-        export PATH=/usr/pgsql-14/bin:$PATH
         cd $GITHUB_WORKSPACE
         make USE_PGXS=1
  
