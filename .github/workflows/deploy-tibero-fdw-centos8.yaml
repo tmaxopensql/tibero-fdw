@@ -1,15 +1,14 @@
 name: deploy-tibero-fdw-centos8
 
 on:
-  workflow_call:
-    secrets:
-      git-access-token:
-        description: 'Access token for Github'
-        required: true
+  release:
+    types: [published]
 
 env:
-  DEPLOY_REPO: tmaxopensql/tibero-fdw-dist
   BUILD_OS: centos8
+  ASSET_NAME: tibero-fdw-dist-centos8
+  BUILD_PATH: /home/tibero-fdw-dist-centos8
+  ZIP_FILE_PATH: /home/tibero-fdw-dist-centos8.zip
 
 jobs:
   deploy-tibero-fdw-centos8:
@@ -17,15 +16,20 @@ jobs:
     container:
       image: centos:8
 
-    steps:      
-    - name: home
-      run: |
-        cd /home
-        sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
-        sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
-
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Get the latest release info
+      id: latest_release_info
+      uses: bruceadams/get-release@v1.3.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
+  
     - name: Install PostgreSQL
       run: |
+        sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
+        sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
         dnf update -y
         dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
         dnf install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
@@ -33,55 +37,35 @@ jobs:
         dnf -qy module disable postgresql
         dnf install -y --nobest postgresql14-server postgresql14-devel      
 
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
         export PATH=/usr/pgsql-14/bin:$PATH
+        cd $GITHUB_WORKSPACE
         make USE_PGXS=1
+ 
+    - name: Make dist zip file
+      run: |
+        mkdir ${{ env.BUILD_PATH }}
+        mkdir ${{ env.BUILD_PATH }}/lib
+        cp $GITHUB_WORKSPACE/tibero_fdw.so ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/*.bc ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/tibero_fdw.control ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/*.sql ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/Makefile ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/setenv.sh ${{ env.BUILD_PATH }}
+        cp -r $GITHUB_WORKSPACE/tests/ ${{ env.BUILD_PATH }}
+        cp -r $GITHUB_WORKSPACE/lib/ ${{ env.BUILD_PATH }}
+        cd ${{ env.BUILD_PATH }}
+        yum install -y zip
+        cd ${{ env.BUILD_PATH }} && zip -r ${{ env.ZIP_FILE_PATH }} .
 
-    - name: Checkout deploy repository
-      uses: actions/checkout@v2
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
       with:
-        repository: ${{ env.DEPLOY_REPO }}
-        ref: main
-        token: ${{ secrets.git-access-token }}
-        path: tibero-fdw-dist
-
-    - name: Deploy to tibero-fdw-dist
-      run: |
-        cp tibero_fdw.so tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp *.bc tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp tibero_fdw.control tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp *.sql tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp Makefile tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp setenv.sh tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cp -r tests/ tibero-fdw-dist/${{ env.BUILD_OS }}/
-        cd lib/
-        cp * ../tibero-fdw-dist/${{ env.BUILD_OS }}/lib/
-        cd ..
-        ls
-
-    - name: Initialize Git repository
-      run: |
-        cd tibero-fdw-dist/
-        pwd
-        git init
-        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-        git config --global user.name "${{ github.actor }}"
-        git config --list
-        git remote -v
-
-    - name: git push
-      run: |
-        ls
-        cd tibero-fdw-dist/${{ env.BUILD_OS }}/
-        git add .
-        if [[ -n $(git diff --cached --exit-code) ]]; then
-          git commit -m "Deploy libraries"
-          git push -u origin main
-        else
-          echo "No changes to commit"
-        fi
+        upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+        asset_path: ${{ env.ZIP_FILE_PATH }}
+        asset_name: ${{ env.ASSET_NAME }}.zip
+        asset_content_type: application/zip
