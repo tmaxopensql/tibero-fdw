@@ -1,20 +1,20 @@
-name: deploy-tibero-fdw-centos8
+name: deploy-postgresql15-tibero-fdw-centos7
 
 on:
   release:
     types: [published]
 
 env:
-  BUILD_OS: centos8
-  ASSET_NAME: tibero-fdw-dist-centos8
-  BUILD_PATH: /home/tibero-fdw-dist-centos8
-  ZIP_FILE_PATH: /home/tibero-fdw-dist-centos8.zip
+  BUILD_OS: centos7
+  ASSET_NAME: postgresql15-tibero-fdw-dist-centos7
+  BUILD_PATH: /home/postgresql15-tibero-fdw-dist-centos7
+  ZIP_FILE_PATH: /home/postgresql15-tibero-fdw-dist-centos7.zip
 
 jobs:
-  deploy-tibero-fdw-centos8:
+  deploy-pg15-tibero-fdw-centos7:
     runs-on: ubuntu-20.04
     container:
-      image: centos:8
+      image: centos:7
 
     steps:
     - name: Checkout repository
@@ -25,22 +25,19 @@ jobs:
       uses: bruceadams/get-release@v1.3.2
       env:
         GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
-  
+    
     - name: Install PostgreSQL
       run: |
-        sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*
-        sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
-        dnf update -y
-        dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        dnf install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm 
-        dnf -y group install "Development Tools"
-        dnf -qy module disable postgresql
-        dnf install -y --nobest postgresql14-server postgresql14-devel      
+        yum update -y
+        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm
+        yum install -y centos-release-scl-rh epel-release devtoolset-7 llvm-toolset-7 llvm-toolset-7-llvm-static make gcc git
+        yum install -y postgresql15 postgresql15-server postgresql15-devel
 
     - name: Build tibero-fdw 
       run: |
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
-        export PATH=/usr/pgsql-14/bin:$PATH
+        export PATH=/usr/pgsql-15/bin:$PATH
         cd $GITHUB_WORKSPACE
         make USE_PGXS=1
  

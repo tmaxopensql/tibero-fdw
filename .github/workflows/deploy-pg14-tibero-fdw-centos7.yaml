@@ -1,20 +1,20 @@
-name: deploy-tibero-fdw-redhat8
+name: deploy-pg14-tibero-fdw-centos7
 
 on:
   release:
     types: [published]
 
 env:
-  BUILD_OS: redhat8
-  ASSET_NAME: tibero-fdw-dist-redhat8
-  BUILD_PATH: /home/tibero-fdw-dist-redhat8
-  ZIP_FILE_PATH: /home/tibero-fdw-dist-redhat8.zip
+  BUILD_OS: centos7
+  ASSET_NAME: postgresql14-tibero-fdw-dist-centos7
+  BUILD_PATH: /home/postgresql14-tibero-fdw-dist-centos7
+  ZIP_FILE_PATH: /home/postgresql14-tibero-fdw-dist-centos7.zip
 
 jobs:
-  deploy-tibero-fdw-redhat8:
+  deploy-pg14-tibero-fdw-centos7:
     runs-on: ubuntu-20.04
     container:
-      image: registry.access.redhat.com/ubi8/ubi:latest
+      image: centos:7
 
     steps:
     - name: Checkout repository
@@ -25,15 +25,14 @@ jobs:
       uses: bruceadams/get-release@v1.3.2
       env:
         GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
-  
+    
     - name: Install PostgreSQL
       run: |
-        sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
         yum update -y
-        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
         yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm
-        yum -y install redhat-rpm-config gcc make git
-        yum install -y --nobest postgresql14 postgresql14-server postgresql14-devel      
+        yum install -y centos-release-scl-rh epel-release devtoolset-7 llvm-toolset-7 llvm-toolset-7-llvm-static make gcc git
+        yum install -y postgresql14 postgresql14-server postgresql14-devel
 
     - name: Build tibero-fdw 
       run: |
