@@ -6,7 +6,7 @@ on:
 
 env:
   BUILD_OS: redhat9
-  ASSET_NAME: postgresql14-tibero-fdw-redhat9
+  ASSET_NAME: postgresql14-tibero-fdw-dist-redhat9
   BUILD_PATH: /home/postgresql14-tibero-fdw-dist-redhat9
   ZIP_FILE_PATH: /home/postgresql14-tibero-fdw-dist-redhat9.zip
 
