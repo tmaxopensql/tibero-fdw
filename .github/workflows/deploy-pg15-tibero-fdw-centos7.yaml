@@ -1,4 +1,4 @@
-name: deploy-postgresql15-tibero-fdw-centos7
+name: deploy-pg15-tibero-fdw-centos7
 
 on:
   release:
