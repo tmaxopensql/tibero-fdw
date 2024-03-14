@@ -40,6 +40,9 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#if PG_VERSION_NUM < 160000
+#include "parser/parse_relation.h"
+#endif
 #include "storage/latch.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
@@ -434,8 +437,14 @@ tiberoBeginForeignScan(ForeignScanState *node, int eflags)
 	/* Join/Aggregation case */
 	Assert(fsplan->scan.scanrelid > 0);
 	rtindex = fsplan->scan.scanrelid;
+
+#if PG_VERSION_NUM >= 160000
 	rte = exec_rt_fetch(rtindex, estate);
-	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+	userid = (fsplan->checkAsUser != InvalidOid) ? fsplan->checkAsUser : GetUserId();
+#else
+	rte = rt_fetch(rtindex, estate->es_range_table);
+	userid = (rte->checkAsUser != InvalidOid) ? rte->checkAsUser : GetUserId();
+#endif
 
 	table = GetForeignTable(rte->relid);
 	user = GetUserMapping(userid, table->serverid);
@@ -876,19 +885,29 @@ tiberoBeginForeignModify(ModifyTableState *mtstate, ResultRelInfo *resultRelInfo
 	bool isvarlena = false;
 	ListCell *lc;
 	Oid foreignTableId = InvalidOid;
-	RangeTblEntry *rte;
 	Oid userid;
 	ForeignServer *server;
 	UserMapping *user;
 	ForeignTable *table;
+#if PG_VERSION_NUM >= 160000
+	ForeignScan *fsplan = (ForeignScan *) mtstate->ps.plan;
+#else
+	RangeTblEntry *rte;
+#endif
+
 
 	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
 		return;
 
 	set_sleep_on_sig_on();
 
+
+#if PG_VERSION_NUM >= 160000
+	userid = (fsplan->checkAsUser != InvalidOid) ? fsplan->checkAsUser : GetUserId();
+#else
 	rte = rt_fetch(resultRelInfo->ri_RangeTableIndex, estate->es_range_table);
-	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+	userid = (rte->checkAsUser != InvalidOid) ? rte->checkAsUser : GetUserId();
+#endif
 
 	foreignTableId = RelationGetRelid(rel);
 
@@ -1010,3 +1029,4 @@ tiberoEndForeignModify(EState *estate, ResultRelInfo *resultRelInfo)
 
 	set_sleep_on_sig_off();
 }
+
