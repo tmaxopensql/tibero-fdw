@@ -1,0 +1,69 @@
+name: deploy-pg15-tibero-fdw-redhat8
+
+on:
+  release:
+    types: [published]
+
+env:
+  BUILD_OS: redhat8
+  ASSET_NAME: postgresql15-tibero-fdw-dist-redhat8
+  BUILD_PATH: /home/postgresql15-tibero-fdw-dist-redhat8
+  ZIP_FILE_PATH: /home/postgresql15-tibero-fdw-dist-redhat8.zip
+
+jobs:
+  deploy-pg15-tibero-fdw-redhat8:
+    runs-on: ubuntu-20.04
+    container:
+      image: registry.access.redhat.com/ubi8/ubi:latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Get the latest release info
+      id: latest_release_info
+      uses: bruceadams/get-release@v1.3.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
+  
+    - name: Install PostgreSQL
+      run: |
+        sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
+        yum update -y
+        yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        yum install -y http://opensource.wandisco.com/centos/7/git/x86_64/wandisco-git-release-7-1.noarch.rpm
+        yum -y install redhat-rpm-config gcc make git
+        yum install -y --nobest postgresql15 postgresql15-server postgresql15-devel      
+
+    - name: Build tibero-fdw 
+      run: |
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/lib
+        export PATH=/usr/pgsql-15/bin:$PATH
+        cd $GITHUB_WORKSPACE
+        make USE_PGXS=1
+ 
+    - name: Make dist zip file
+      run: |
+        mkdir ${{ env.BUILD_PATH }}
+        mkdir ${{ env.BUILD_PATH }}/lib
+        cp $GITHUB_WORKSPACE/tibero_fdw.so ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/*.bc ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/tibero_fdw.control ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/*.sql ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/Makefile ${{ env.BUILD_PATH }}
+        cp $GITHUB_WORKSPACE/setenv.sh ${{ env.BUILD_PATH }}
+        cp -r $GITHUB_WORKSPACE/tests/ ${{ env.BUILD_PATH }}
+        cp -r $GITHUB_WORKSPACE/lib/ ${{ env.BUILD_PATH }}
+        cd ${{ env.BUILD_PATH }}
+        yum install -y zip
+        cd ${{ env.BUILD_PATH }} && zip -r ${{ env.ZIP_FILE_PATH }} .
+
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
+      with:
+        upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+        asset_path: ${{ env.ZIP_FILE_PATH }}
+        asset_name: ${{ env.ASSET_NAME }}.zip
+        asset_content_type: application/zip
