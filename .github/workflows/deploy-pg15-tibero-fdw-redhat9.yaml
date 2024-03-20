@@ -1,6 +1,7 @@
 name: deploy-pg15-tibero-fdw-redhat9
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
