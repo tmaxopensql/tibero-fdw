@@ -17,6 +17,7 @@
 #include "access/reloptions.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
+#include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "nodes/value.h"
@@ -40,6 +41,7 @@ typedef struct TbFdwOption
 static inline void validate_foreign_server_options(const List *input);
 static inline void validate_foreign_table_options(const List *input);
 static inline void validate_user_mapping_options(const List *input);
+static inline void validate_attribute_options(const List *input);
 
 static inline void validate_options(TbFdwOption *registered, const List *input);
 static inline bool search_for_option_in_registered(TbFdwOption *registered, DefElem *def);
@@ -59,6 +61,7 @@ static void validate_use_fb_query_option(DefElem *def);
 static void validate_keep_connections_option(DefElem *def);
 static void validate_password_required_option(DefElem *def);
 static void validate_updatable_option(DefElem *def);
+static void validate_column_name_option(DefElem *def);
 
 static inline char * get_str_value_with_null_check(DefElem *def);
 static inline bool get_bool_value_with_null_check(DefElem *def);
@@ -102,6 +105,12 @@ tibero_fdw_validator(PG_FUNCTION_ARGS)
 			break;
 		case UserMappingRelationId:
 			validate_user_mapping_options(options);
+			break;
+		case AttributeRelationId:
+			validate_attribute_options(options);
+			break;
+		case ForeignDataWrapperRelationId:
+			/* No options to validate for FDW itself */
 			break;
 		default:
 			Assert(false && "tibero_fdw_validator function is called by invalid relation");
@@ -151,6 +160,16 @@ validate_user_mapping_options(const List *options)
 		TB_FDW_OPTION_ARRAY_END
 	};
 	validate_options(foreign_server_options, options);
+}
+
+static inline void
+validate_attribute_options(const List *options)
+{
+	TbFdwOption attribute_options[] = {
+		TB_FDW_OPTION(column_name, false, false),
+		TB_FDW_OPTION_ARRAY_END
+	};
+	validate_options(attribute_options, options);
 }
 
 static inline void
@@ -335,6 +354,12 @@ static void
 validate_keep_connections_option(DefElem *def)
 {
 	(void) get_bool_value_with_null_check(def);
+}
+
+static void 
+validate_column_name_option(DefElem *def)
+{
+	(void) get_str_value_with_null_check(def);
 }
 
 static inline char *
