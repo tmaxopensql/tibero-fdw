@@ -21,6 +21,10 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_opfamily.h"
 #include "commands/defrem.h"
+#if PG_VERSION_NUM >= 180000
+#include "commands/explain_state.h"
+#include "commands/explain_format.h"
+#endif
 #include "commands/explain.h"
 #include "commands/vacuum.h"
 #include "executor/execAsync.h"
@@ -333,9 +337,20 @@ tiberoGetForeignPaths(PlannerInfo *root, RelOptInfo *baserel, Oid foreigntableid
 	set_sleep_on_sig_on();
 
 	add_path(baserel,
-					 (Path *) create_foreignscan_path(root, baserel, NULL, fpinfo->rows, fpinfo->startup_cost,
-																						fpinfo->total_cost, NIL, baserel->lateral_relids, NULL,
-																						NIL));
+					 (Path *)
+#if PG_VERSION_NUM >= 180000
+					 create_foreignscan_path(root, baserel, NULL, fpinfo->rows, 0, fpinfo->startup_cost,
+																 fpinfo->total_cost, NIL, baserel->lateral_relids, NULL, NIL,
+																 NIL)
+#elif PG_VERSION_NUM >= 170000
+					 create_foreignscan_path(root, baserel, NULL, fpinfo->rows, fpinfo->startup_cost,
+																 fpinfo->total_cost, NIL, baserel->lateral_relids, NULL, NIL,
+																 NIL)
+#else
+					 create_foreignscan_path(root, baserel, NULL, fpinfo->rows, fpinfo->startup_cost,
+																 fpinfo->total_cost, NIL, baserel->lateral_relids, NULL, NIL)
+#endif
+					 );
 
 	if (fpinfo->use_remote_estimate) {
 		/* TODO */
@@ -1029,4 +1044,3 @@ tiberoEndForeignModify(EState *estate, ResultRelInfo *resultRelInfo)
 
 	set_sleep_on_sig_off();
 }
-

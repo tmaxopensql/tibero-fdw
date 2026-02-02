@@ -28,6 +28,7 @@ bool use_sleep_on_sig = false;
 /*************************************************************************** global variables }}} */
 
 void register_signal_handlers(void);
+static pqsigfunc install_signal_handler(int signo, pqsigfunc handler);
 static void sleep_on_sig(int signo);
 void set_sleep_on_sig_on(void);
 void set_sleep_on_sig_off(void);
@@ -48,6 +49,30 @@ inline void
 set_sleep_on_sig_off(void)
 {
 	use_sleep_on_sig = false;
+}
+
+/*
+ * PG18 changed pqsignal() to return void.
+ * Keep previous-handler chaining by using sigaction() on PG18+.
+ */
+static pqsigfunc
+install_signal_handler(int signo, pqsigfunc handler)
+{
+#if PG_VERSION_NUM >= 180000
+	struct sigaction act;
+	struct sigaction oact;
+
+	act.sa_handler = handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+
+	if (sigaction(signo, &act, &oact) < 0)
+		return SIG_ERR;
+
+	return oact.sa_handler;
+#else
+	return pqsignal(signo, handler);
+#endif
 }
 
 static void
@@ -93,10 +118,10 @@ sigfpe_handler(int signo)
 void
 register_signal_handlers(void)
 {
-	prev_sigsegv_handler = pqsignal(SIGSEGV, sigsegv_handler);
-	prev_sigbus_handler	= pqsignal(SIGBUS, sigbus_handler);
-	prev_sigabrt_handler = pqsignal(SIGABRT, sigabrt_handler);
-	prev_sigfpe_handler	= pqsignal(SIGFPE, sigfpe_handler);
+	prev_sigsegv_handler = install_signal_handler(SIGSEGV, sigsegv_handler);
+	prev_sigbus_handler	= install_signal_handler(SIGBUS, sigbus_handler);
+	prev_sigabrt_handler = install_signal_handler(SIGABRT, sigabrt_handler);
+	prev_sigfpe_handler	= install_signal_handler(SIGFPE, sigfpe_handler);
 
 	is_signal_handlers_registered = true;
 }
