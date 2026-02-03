@@ -15,7 +15,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE d_ft1 (
       dt DATE,
-      dt_bc9999 DATE,
+      dt_bc4712 DATE,
       dt_ad9999 DATE,
       dt_detail DATE,
       ts TIMESTAMP,
@@ -48,8 +48,8 @@ BEGIN;
   /*
   -- TEST 2:
   SELECT is(
-    (SELECT TO_CHAR(dt_bc9999, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    'bc9999-01-01 00:00:00.000000'
+    (SELECT TO_CHAR(dt_bc4712, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
+    'bc4712-01-01 00:00:00.000000'
   );
 
   -- TEST 3:
@@ -95,7 +95,7 @@ BEGIN;
   -- TEST 8:
   SELECT is(
     (SELECT TO_CHAR(ts_bc, 'bcYYYY-MM-DD HH24:MI:SS.FF6') FROM d_ft1),
-    'bc9999-01-01 12:34:56.123456'
+    'bc4712-01-01 12:34:56.123456'
   );
 
   -- TEST 9:
@@ -134,7 +134,7 @@ BEGIN;
   -- TEST 13:
   SELECT is(
     (SELECT TO_CHAR(tsz_bc, 'bcYYYY-MM-DD HH24:MI:SS.FF6 TZ') FROM d_ft1),
-    'bc9999-01-01 21:34:56.123456 KST'
+    'bc4712-01-01 21:34:56.123456 KST'
   );
 
   -- TEST 14:
@@ -205,7 +205,7 @@ BEGIN;
 
 	CREATE FOREIGN TABLE d_ft3 (
       dt TIMESTAMP,
-      dt_bc9999 TIMESTAMP,
+      dt_bc4712 TIMESTAMP,
       dt_ad9999 TIMESTAMP,
       dt_detail TIMESTAMP,
       ts TIMESTAMP,
@@ -233,7 +233,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE d_ft4 (
       dt CHAR(20),
-      dt_bc9999 CHAR(20),
+      dt_bc4712 CHAR(20),
       dt_ad9999 CHAR(20),
       dt_detail CHAR(20),
       ts CHAR(30),
@@ -261,7 +261,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE d_ft5 (
       dt VARCHAR(20),
-      dt_bc9999 VARCHAR(20),
+      dt_bc4712 VARCHAR(20),
       dt_ad9999 VARCHAR(20),
       dt_detail VARCHAR(20),
       ts VARCHAR(30),
@@ -289,7 +289,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE d_ft6 (
       dt TEXT,
-      dt_bc9999 TEXT,
+      dt_bc4712 TEXT,
       dt_ad9999 TEXT,
       dt_detail TEXT,
       ts TEXT,
@@ -317,7 +317,7 @@ BEGIN;
 
   CREATE FOREIGN TABLE d_ft7 (
       dt DATE,
-      dt_bc9999 DATE,
+      dt_bc4712 DATE,
       dt_ad9999 DATE,
       dt_detail DATE,
       ts DATE,

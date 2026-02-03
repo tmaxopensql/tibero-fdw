@@ -50,7 +50,7 @@ BEGIN;
       nvc2_kor_full TEXT,
       nvc2_eng_full TEXT,
       nvc2_spc_full TEXT
-  ) SERVER server_name OPTIONS (owner_name 'tibero', table_name 't1');
+  ) SERVER server_name OPTIONS (owner_name :'TIBERO_USER', table_name 't1');
 
   -- TEST 1
   SELECT results_eq('
